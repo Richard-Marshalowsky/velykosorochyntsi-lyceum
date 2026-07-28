@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Адмін-панель | Великосорочинський ліцей</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            width: 240px;
+            background-color: #0f2942;
+            color: #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .sidebar-brand {
+            padding: 18px 16px;
+            border-bottom: 1px solid #1e3a5f;
+        }
+
+        .sidebar-brand h2 {
+            color: #ffffff;
+            font-size: 0.88rem;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-brand .role-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 3px;
+            background-color: #f59e0b;
+            color: #0f172a;
+        }
+
+        .role-badge.super_admin { background-color: #dc2626; color: #fff; }
+        .role-badge.admin { background-color: #2563eb; color: #fff; }
+        .role-badge.editor { background-color: #16a34a; color: #fff; }
+
+        .sidebar-user {
+            padding: 12px 16px;
+            border-bottom: 1px solid #1e3a5f;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .sidebar-user strong {
+            display: block;
+            color: #e2e8f0;
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+            word-break: break-all;
+        }
+
+        .nav-section-title {
+            padding: 12px 16px 6px;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #475569;
+            font-weight: 700;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.88rem;
+            transition: background 0.15s, color 0.15s;
+            cursor: pointer;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background-color: #1e3a5f;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .sidebar-nav a i { width: 16px; text-align: center; }
+
+        /* hidden sections shown only by role */
+        .admin-only, .super-only { display: none; }
+
+        .btn-logout {
+            margin-top: auto;
+            padding: 12px 16px;
+            border-top: 1px solid #1e3a5f;
+            background: none;
+            border: none;
+            border-top: 1px solid #1e3a5f;
+            color: #64748b;
+            font-size: 0.82rem;
+            text-align: left;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-logout:hover { color: #ef4444; }
+
+        /* MAIN */
+        .main-area {
+            margin-left: 240px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .topbar h1 {
+            font-size: 1rem;
+            color: #1a365d;
+        }
+
+        .topbar-right a {
+            font-size: 0.82rem;
+            color: #64748b;
+        }
+
+        .content-area {
+            padding: 24px;
+        }
+
+        /* PANELS */
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            color: #1a365d;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1a365d;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* STAT CARDS */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 3px solid #1a365d;
+            border-radius: 4px;
+            padding: 14px 16px;
+        }
+
+        .stat-card .stat-num {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #1a365d;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.78rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        /* FORM CARD */
+        .form-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-card h3 {
+            font-size: 0.95rem;
+            color: #1a365d;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 0.88rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: #1a365d;
+        }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .btn-save {
+            background-color: #1a365d;
+            color: #ffffff;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 4px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .btn-save:hover { background-color: #2563eb; }
+
+        .btn-danger {
+            background-color: #dc2626;
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* USER TABLE */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            background: #ffffff;
+        }
+
+        .data-table th {
+            background-color: #f1f5f9;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 700;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        .data-table td {
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover td { background-color: #f8fafc; }
+
+        .role-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .role-pill.super_admin { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+        .role-pill.admin { background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; }
+        .role-pill.editor { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
+
+        .feedback-msg {
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+            display: none;
+        }
+
+        .feedback-msg.success { background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; display:block; }
+        .feedback-msg.error { background:#fef2f2; border:1px solid #fecaca; color:#dc2626; display:block; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <h2>Великосорочинський ліцей</h2>
+            <span class="role-badge" id="role-badge">...</span>
+        </div>
+
+        <div class="sidebar-user">
+            <strong id="user-email">Завантаження...</strong>
+            Адміністратор сайту
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-title">Основне</div>
+            <a onclick="showPanel('home')" class="active">
+                <i class="fa-solid fa-house"></i> Огляд
+            </a>
+
+            <div class="nav-section-title">Контент</div>
+            <a onclick="showPanel('news')">
+                <i class="fa-solid fa-newspaper"></i> Новини та оголошення
+            </a>
+
+            <div class="admin-only">
+                <a onclick="showPanel('schedule')">
+                    <i class="fa-solid fa-calendar-check"></i> Розклад уроків
+                </a>
+                <a onclick="showPanel('documents')">
+                    <i class="fa-solid fa-file-lines"></i> Документи
+                </a>
+            </div>
+
+            <div class="super-only">
+                <div class="nav-section-title">Адміністрування</div>
+                <a onclick="showPanel('users')">
+                    <i class="fa-solid fa-users-gear"></i> Управління користувачами
+                </a>
+                <a onclick="showPanel('settings')">
+                    <i class="fa-solid fa-gear"></i> Налаштування сайту
+                </a>
+            </div>
+        </nav>
+
+        <button class="btn-logout" onclick="handleLogout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Вийти
+        </button>
+    </div>
+
+    <!-- MAIN AREA -->
+    <div class="main-area">
+        <div class="topbar">
+            <h1 id="panel-title"><i class="fa-solid fa-gauge"></i> Огляд</h1>
+            <div class="topbar-right">
+                <a href="../index.html" target="_blank">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Переглянути сайт
+                </a>
+            </div>
+        </div>
+
+        <div class="content-area">
+
+            <!-- HOME -->
+            <div class="panel active" id="panel-home">
+                <div class="panel-title"><i class="fa-solid fa-gauge"></i> Панель керування</div>
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-num" id="stat-role">—</div>
+                        <div class="stat-label">Ваша роль у системі</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-num">5</div>
+                        <div class="stat-label">Сторінок на сайті</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-num" id="stat-users">—</div>
+                        <div class="stat-label">Адміністраторів</div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <h3><i class="fa-solid fa-circle-info"></i> Ваші можливості</h3>
+                    <div id="role-description" style="font-size:0.88rem; color:#475569; line-height:1.7;"></div>
+                </div>
+            </div>
+
+            <!-- NEWS -->
+            <div class="panel" id="panel-news">
+                <div class="panel-title"><i class="fa-solid fa-newspaper"></i> Новини та оголошення</div>
+                <div class="feedback-msg" id="news-feedback"></div>
+                <div class="form-card">
+                    <h3><i class="fa-solid fa-plus"></i> Додати нову новину / оголошення</h3>
+                    <form id="news-form" onsubmit="handleNewsSubmit(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Заголовок *</label>
+                                <input type="text" id="news-title" required placeholder="Короткий заголовок новини">
+                            </div>
+                            <div class="form-group">
+                                <label>Категорія</label>
+                                <select id="news-category">
+                                    <option value="general">Загальне</option>
+                                    <option value="important">Важливо</option>
+                                    <option value="it">IT-освіта</option>
+                                    <option value="sport">Спорт</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Текст новини *</label>
+                            <textarea id="news-body" rows="4" required placeholder="Повний текст..."></textarea>
+                        </div>
+                        <button type="submit" class="btn-save">
+                            <i class="fa-solid fa-paper-plane"></i> Опублікувати
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- SCHEDULE (admin+) -->
+            <div class="panel" id="panel-schedule">
+                <div class="panel-title"><i class="fa-solid fa-calendar-check"></i> Розклад уроків</div>
+                <div class="form-card">
+                    <h3>Редагування розкладу</h3>
+                    <p style="font-size:0.85rem; color:#64748b;">Функція редагування розкладу буде доступна після підключення до бази даних Supabase.</p>
+                </div>
+            </div>
+
+            <!-- DOCUMENTS (admin+) -->
+            <div class="panel" id="panel-documents">
+                <div class="panel-title"><i class="fa-solid fa-file-lines"></i> Документи</div>
+                <div class="form-card">
+                    <h3><i class="fa-solid fa-plus"></i> Додати документ</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Назва документу</label>
+                            <input type="text" placeholder="Назва документу">
+                        </div>
+                        <div class="form-group">
+                            <label>Тип</label>
+                            <select>
+                                <option>Нормативний документ</option>
+                                <option>Наказ</option>
+                                <option>Звіт директора</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Посилання на файл (Google Drive або інший хостинг)</label>
+                        <input type="url" placeholder="https://...">
+                    </div>
+                    <button class="btn-save"><i class="fa-solid fa-floppy-disk"></i> Зберегти</button>
+                </div>
+            </div>
+
+            <!-- USERS (super_admin only) -->
+            <div class="panel" id="panel-users">
+                <div class="panel-title"><i class="fa-solid fa-users-gear"></i> Управління користувачами</div>
+                <div class="feedback-msg" id="users-feedback"></div>
+                <div class="form-card">
+                    <h3><i class="fa-solid fa-user-plus"></i> Запросити нового користувача</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email нового користувача</label>
+                            <input type="email" id="invite-email" placeholder="teacher@school.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Роль</label>
+                            <select id="invite-role">
+                                <option value="editor">Вчитель (editor) — тільки новини</option>
+                                <option value="admin">Директор (admin) — розклад, документи, новини</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn-save" onclick="handleInviteUser()">
+                        <i class="fa-solid fa-paper-plane"></i> Надіслати запрошення
+                    </button>
+                </div>
+
+                <div class="form-card">
+                    <h3><i class="fa-solid fa-list"></i> Поточні користувачі</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Роль</th>
+                                <th>Статус</th>
+                                <th>Дія</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:20px;">Завантаження...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SETTINGS (super_admin only) -->
+            <div class="panel" id="panel-settings">
+                <div class="panel-title"><i class="fa-solid fa-gear"></i> Налаштування сайту</div>
+                <div class="form-card">
+                    <h3>Контактна інформація</h3>
+                    <div class="form-group">
+                        <label>Телефон</label>
+                        <input type="text" value="(05355) 31-624">
+                    </div>
+                    <div class="form-group">
+                        <label>Email закладу</label>
+                        <input type="email" value="sorint@ukr.net">
+                    </div>
+                    <div class="form-group">
+                        <label>Адреса</label>
+                        <input type="text" value="вул. Миргородська, 40, с. Великі Сорочинці, 37645">
+                    </div>
+                    <button class="btn-save"><i class="fa-solid fa-floppy-disk"></i> Зберегти зміни</button>
+                </div>
+            </div>
+
+        </div><!-- /content-area -->
+    </div><!-- /main-area -->
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let currentRole = null;
+
+        const roleLabels = {
+            super_admin: '👑 Супер Адмін',
+            admin: '🔵 Адміністратор',
+            editor: '🟢 Редактор'
+        };
+
+        const roleDescriptions = {
+            super_admin: `
+                <strong>Ваша роль: Супер Адміністратор</strong><br>
+                ✅ Публікація та видалення новин і оголошень<br>
+                ✅ Редагування розкладу занять<br>
+                ✅ Управління нормативними документами<br>
+                ✅ Запрошення та видалення користувачів<br>
+                ✅ Зміна ролей інших користувачів<br>
+                ✅ Налаштування контактної інформації сайту
+            `,
+            admin: `
+                <strong>Ваша роль: Адміністратор</strong><br>
+                ✅ Публікація та редагування новин та оголошень<br>
+                ✅ Редагування розкладу занять<br>
+                ✅ Управління нормативними документами<br>
+                ❌ Управління користувачами (тільки Супер Адмін)
+            `,
+            editor: `
+                <strong>Ваша роль: Редактор</strong><br>
+                ✅ Публікація новин та оголошень<br>
+                ❌ Редагування розкладу (тільки адміністратор)<br>
+                ❌ Управління документами<br>
+                ❌ Управління користувачами
+            `
+        };
+
+        // ─── Auth check ───────────────────────────────────────
+        async function init() {
+            const { data: { session } } = await db.auth.getSession();
+
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            currentUser = session.user;
+            const email = currentUser.email;
+
+            // Визначаємо роль
+            const { data: member, error: memberError } = await db
+                .from('admin_users')
+                .select('role')
+                .eq('email', email.toLowerCase())
+                .maybeSingle();
+            if (memberError || !member) {
+                await db.auth.signOut();
+                window.location.href = 'login.html';
+                return;
+            }
+            currentRole = member.role;
+
+            // Відображаємо інформацію
+            document.getElementById('user-email').textContent = email;
+
+            const badgeEl = document.getElementById('role-badge');
+            badgeEl.textContent = roleLabels[currentRole];
+            badgeEl.className = 'role-badge ' + currentRole;
+
+            document.getElementById('stat-role').textContent =
+                currentRole === 'super_admin' ? 'Супер Адмін' :
+                currentRole === 'admin' ? 'Адмін' : 'Редактор';
+
+            document.getElementById('role-description').innerHTML =
+                roleDescriptions[currentRole] || roleDescriptions.editor;
+
+            // Показуємо елементи за роллю
+            if (currentRole === 'admin' || currentRole === 'super_admin') {
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+            }
+
+            if (currentRole === 'super_admin') {
+                document.querySelectorAll('.super-only').forEach(el => el.style.display = 'block');
+                loadUsers();
+            }
+        }
+
+        // ─── Panel switching ──────────────────────────────────
+        function showPanel(name) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+
+            document.getElementById('panel-' + name).classList.add('active');
+
+            const titles = {
+                home: '<i class="fa-solid fa-gauge"></i> Огляд',
+                news: '<i class="fa-solid fa-newspaper"></i> Новини',
+                schedule: '<i class="fa-solid fa-calendar-check"></i> Розклад',
+                documents: '<i class="fa-solid fa-file-lines"></i> Документи',
+                users: '<i class="fa-solid fa-users-gear"></i> Користувачі',
+                settings: '<i class="fa-solid fa-gear"></i> Налаштування',
+            };
+
+            document.getElementById('panel-title').innerHTML = titles[name] || name;
+        }
+
+        // ─── News submit ──────────────────────────────────────
+        async function handleNewsSubmit(e) {
+            e.preventDefault();
+            const fb = document.getElementById('news-feedback');
+            fb.className = 'feedback-msg';
+
+            const { error } = await db.from('news').insert({
+                title: document.getElementById('news-title').value,
+                category: document.getElementById('news-category').value,
+                body: document.getElementById('news-body').value,
+                author_email: currentUser.email,
+                created_at: new Date().toISOString()
+            });
+
+            if (error) {
+                fb.className = 'feedback-msg error';
+                fb.textContent = 'Помилка: ' + error.message;
+            } else {
+                fb.className = 'feedback-msg success';
+                fb.textContent = '✅ Новину успішно опубліковано!';
+                document.getElementById('news-form').reset();
+            }
+        }
+
+        // ─── Load users (super_admin only) ───────────────────
+        async function loadUsers() {
+            const tbody = document.getElementById('users-table-body');
+            const { data, error } = await db.from('admin_users').select('*');
+
+            if (error || !data) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">Таблиця admin_users ще не створена в Supabase</td></tr>';
+                document.getElementById('stat-users').textContent = '—';
+                return;
+            }
+
+            document.getElementById('stat-users').textContent = data.length;
+
+            tbody.innerHTML = data.map(u => `
+                <tr>
+                    <td>${u.email}</td>
+                    <td><span class="role-pill ${u.role}">${roleLabels[u.role] || u.role}</span></td>
+                    <td><span style="color:#16a34a; font-size:0.8rem;">● Активний</span></td>
+                    <td>${u.email !== SUPER_ADMIN_EMAIL
+                        ? `<button class="btn-danger" onclick="removeUser('${u.email}')">Видалити</button>`
+                        : '<span style="font-size:0.75rem; color:#94a3b8;">Власник</span>'
+                    }</td>
+                </tr>
+            `).join('');
+        }
+
+        // ─── Invite user ──────────────────────────────────────
+        async function handleInviteUser() {
+            const email = document.getElementById('invite-email').value;
+            const role = document.getElementById('invite-role').value;
+            const fb = document.getElementById('users-feedback');
+
+            if (!email) return;
+
+            // Записуємо запрошення в таблицю
+            const { error } = await db.from('admin_users').insert({ email, role });
+
+            if (error) {
+                fb.className = 'feedback-msg error';
+                fb.textContent = 'Помилка: ' + error.message;
+            } else {
+                fb.className = 'feedback-msg success';
+                fb.textContent = `✅ Користувача ${email} додано з роллю "${role}". Надішли їм посилання на /admin/login.html`;
+                loadUsers();
+            }
+        }
+
+        // ─── Remove user ──────────────────────────────────────
+        async function removeUser(email) {
+            if (!confirm(`Видалити користувача ${email}?`)) return;
+
+            const { error } = await db.from('admin_users').delete().eq('email', email);
+
+            if (!error) loadUsers();
+        }
+
+        // ─── Logout ───────────────────────────────────────────
+        async function handleLogout() {
+            await db.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

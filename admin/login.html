@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вхід — Адміністрування | Великосорочинський ліцей</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f2942;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 28px;
+            color: #ffffff;
+        }
+
+        .login-header .emblem {
+            width: 64px;
+            height: 64px;
+            background-color: #f59e0b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #0f2942;
+            margin: 0 auto 14px;
+        }
+
+        .login-header h1 {
+            font-size: 1.1rem;
+            color: #ffffff;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .login-header p {
+            font-size: 0.82rem;
+            color: #94a3b8;
+        }
+
+        .login-card {
+            background-color: #ffffff;
+            border-radius: 6px;
+            padding: 28px 28px 24px;
+        }
+
+        .login-card h2 {
+            font-size: 1rem;
+            color: #1a365d;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid #1a365d;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 9px 10px 9px 32px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #1a365d;
+        }
+
+        .btn-login {
+            width: 100%;
+            background-color: #1a365d;
+            color: #ffffff;
+            border: none;
+            padding: 11px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-login:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-login:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .btn-google {
+            width: 100%;
+            background-color: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-google:hover { background-color: #f8fafc; border-color: #94a3b8; }
+        .btn-google i { color: #4285f4; }
+
+        .error-msg {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-size: 0.82rem;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .error-msg.show { display: block; }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            color: #94a3b8;
+            font-size: 0.82rem;
+            text-decoration: none;
+        }
+
+        .back-link:hover { color: #ffffff; }
+    </style>
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <div class="login-header">
+            <div class="emblem"><i class="fa-solid fa-graduation-cap"></i></div>
+            <h1>Великосорочинський ліцей</h1>
+            <p>Система адміністрування сайту</p>
+        </div>
+
+        <div class="login-card">
+            <h2><i class="fa-solid fa-lock"></i> Вхід до адмін-панелі</h2>
+
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="email">Електронна пошта</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="email" required autocomplete="email"
+                               placeholder="your@email.com">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-key"></i>
+                        <input type="password" id="password" required autocomplete="current-password"
+                               placeholder="••••••••">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" id="login-btn">
+                    <i class="fa-solid fa-right-to-bracket"></i> Увійти
+                </button>
+
+                <button type="button" class="btn-google" onclick="handleGoogleLogin()">
+                    <i class="fa-brands fa-google"></i> Зареєструватися / Увійти через Google
+                </button>
+
+                <div class="error-msg" id="error-msg"></div>
+            </form>
+        </div>
+
+        <div class="login-footer">
+            Доступ тільки для авторизованих співробітників ліцею.<br>
+            Реєстрація здійснюється виключно адміністратором системи.
+        </div>
+
+        <a href="../index.html" class="back-link">
+            <i class="fa-solid fa-arrow-left"></i> Повернутись до сайту
+        </a>
+    </div>
+
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+        // Ініціалізація Supabase
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Якщо вже залогінений — редирект одразу на дашборд
+        db.auth.getSession().then(({ data: { session } }) => {
+            if (session) window.location.href = 'dashboard.html';
+        });
+
+        async function handleLogin(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('login-btn');
+            const errorEl = document.getElementById('error-msg');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Вхід...';
+            errorEl.classList.remove('show');
+
+            const { data, error } = await db.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                errorEl.textContent = 'Невірний email або пароль. Перевірте дані та спробуйте ще раз.';
+                errorEl.classList.add('show');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Увійти';
+                return;
+            }
+
+            // Успішний вхід — редирект на дашборд
+            window.location.href = 'dashboard.html';
+        }
+
+        async function handleGoogleLogin() {
+            const errorEl = document.getElementById('error-msg');
+            errorEl.classList.remove('show');
+
+            const { error } = await db.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/admin/login.html`
+                }
+            });
+
+            if (error) {
+                errorEl.textContent = `Google sign-in error: ${error.message}`;
+                errorEl.classList.add('show');
+            }
+        }
+    </script>
+</body>
+</html>

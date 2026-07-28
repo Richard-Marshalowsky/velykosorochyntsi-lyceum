@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://velykosorochyntsi-lyceum.pages.dev/sitemap.xml

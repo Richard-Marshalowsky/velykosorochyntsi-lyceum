@@ -1,0 +1,111 @@
+backend:
+  name: git-gateway
+  branch: main
+
+# Мова інтерфейсу адмін-панелі
+locale: uk
+
+# Netlify Identity — вхід через email/пароль
+publish_mode: editorial_workflow
+
+media_folder: "images/uploads"
+public_folder: "/images/uploads"
+
+# ============================================================
+# КОЛЕКЦІЇ — що можуть редагувати в адмін-панелі
+# ============================================================
+collections:
+
+  # --- НОВИНИ ---
+  - name: "news"
+    label: "📰 Новини та оголошення"
+    label_singular: "Новина"
+    folder: "_data/news"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    editor:
+      preview: false
+    fields:
+      - { label: "Заголовок", name: "title", widget: "string", required: true }
+      - { label: "Дата публікації", name: "date", widget: "datetime", format: "DD.MM.YYYY", required: true }
+      - label: "Категорія"
+        name: "category"
+        widget: "select"
+        options:
+          - { label: "IT-освіта", value: "it" }
+          - { label: "Спорт", value: "sport" }
+          - { label: "Загальне", value: "general" }
+          - { label: "Важливо", value: "important" }
+      - { label: "Короткий опис (для картки)", name: "excerpt", widget: "text", required: true }
+      - { label: "Повний текст новини", name: "body", widget: "markdown" }
+      - { label: "Фото до новини (необов'язково)", name: "image", widget: "image", required: false }
+
+  # --- ОГОЛОШЕННЯ (ТІКЕР НА ГОЛОВНІЙ) ---
+  - name: "announcements"
+    label: "📢 Оперативні оголошення (шапка)"
+    label_singular: "Оголошення"
+    folder: "_data/announcements"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    editor:
+      preview: false
+    fields:
+      - { label: "Текст оголошення", name: "title", widget: "string", required: true }
+      - { label: "Дата", name: "date", widget: "datetime", format: "DD.MM.YYYY" }
+      - { label: "Посилання (необов'язково)", name: "link", widget: "string", required: false }
+      - label: "Активне?"
+        name: "active"
+        widget: "boolean"
+        default: true
+
+  # --- РОЗКЛАД УРОКІВ ---
+  - name: "schedule"
+    label: "📅 Розклад уроків"
+    label_singular: "Клас"
+    folder: "_data/schedule"
+    create: false
+    editor:
+      preview: false
+    fields:
+      - { label: "Клас", name: "title", widget: "string" }
+      - label: "Понеділок"
+        name: "monday"
+        widget: "list"
+        field: { label: "Предмет", name: "subject", widget: "string" }
+      - label: "Вівторок"
+        name: "tuesday"
+        widget: "list"
+        field: { label: "Предмет", name: "subject", widget: "string" }
+      - label: "Середа"
+        name: "wednesday"
+        widget: "list"
+        field: { label: "Предмет", name: "subject", widget: "string" }
+      - label: "Четвер"
+        name: "thursday"
+        widget: "list"
+        field: { label: "Предмет", name: "subject", widget: "string" }
+      - label: "П'ятниця"
+        name: "friday"
+        widget: "list"
+        field: { label: "Предмет", name: "subject", widget: "string" }
+
+  # --- ДОКУМЕНТИ (тільки для admin) ---
+  - name: "documents"
+    label: "📄 Документи та накази"
+    label_singular: "Документ"
+    folder: "_data/documents"
+    create: true
+    slug: "{{slug}}"
+    editor:
+      preview: false
+    fields:
+      - { label: "Назва документу", name: "title", widget: "string" }
+      - { label: "Файл або посилання", name: "url", widget: "string" }
+      - label: "Тип"
+        name: "type"
+        widget: "select"
+        options:
+          - { label: "Нормативний документ", value: "normative" }
+          - { label: "Наказ", value: "order" }
+          - { label: "Звіт", value: "report" }
+      - { label: "Дата", name: "date", widget: "datetime", format: "DD.MM.YYYY" }
