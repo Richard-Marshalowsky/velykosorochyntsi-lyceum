@@ -590,7 +590,13 @@
 
         // ─── Auth check ───────────────────────────────────────
         async function init() {
-            const { data: { session } } = await db.auth.getSession();
+            const { data: { session }, error: sessionError } = await db.auth.getSession();
+
+            if (sessionError) {
+                console.error('Session error:', sessionError);
+                window.location.href = 'login.html';
+                return;
+            }
 
             if (!session) {
                 window.location.href = 'login.html';
