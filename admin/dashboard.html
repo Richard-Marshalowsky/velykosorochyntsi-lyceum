@@ -550,8 +550,14 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
     <script>
+        console.log('Dashboard loading...');
+        console.log('SUPABASE_URL:', SUPABASE_URL);
+        console.log('SUPABASE_ANON_KEY exists:', !!SUPABASE_ANON_KEY);
+
         const { createClient } = supabase;
         const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        console.log('Supabase client created:', !!db);
 
         let currentUser = null;
         let currentRole = null;
@@ -590,7 +596,11 @@
 
         // ─── Auth check ───────────────────────────────────────
         async function init() {
+            console.log('Init function started');
+            
             const { data: { session }, error: sessionError } = await db.auth.getSession();
+            
+            console.log('Session result:', { session: !!session, error: sessionError });
 
             if (sessionError) {
                 console.error('Session error:', sessionError);
@@ -599,10 +609,12 @@
             }
 
             if (!session) {
+                console.log('No session found, redirecting to login');
                 window.location.href = 'login.html';
                 return;
             }
 
+            console.log('User session found:', session.user.email);
             currentUser = session.user;
             const email = currentUser.email;
 
