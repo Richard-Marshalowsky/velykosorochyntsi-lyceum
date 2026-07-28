@@ -225,6 +225,10 @@
                     <i class="fa-solid fa-right-to-bracket"></i> Увійти
                 </button>
 
+                <button type="button" class="btn-login" id="register-btn" onclick="handleRegister()" style="background-color: #16a34a; margin-top: 10px;">
+                    <i class="fa-solid fa-user-plus"></i> Зареєструватися
+                </button>
+
                 <!-- Google OAuth temporarily disabled due to redirect_uri_mismatch -->
                 <!-- <button type="button" class="btn-google" onclick="handleGoogleLogin()">
                     <i class="fa-brands fa-google"></i> Зареєструватися / Увійти через Google
@@ -281,6 +285,54 @@
 
             // Успішний вхід — редирект на дашборд
             window.location.href = 'dashboard.html';
+        }
+
+        async function handleRegister() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('register-btn');
+            const errorEl = document.getElementById('error-msg');
+
+            if (!email || !password) {
+                errorEl.textContent = 'Будь ласка, введіть email та пароль';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            if (password.length < 6) {
+                errorEl.textContent = 'Пароль має бути не менше 6 символів';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Реєстрація...';
+            errorEl.classList.remove('show');
+
+            const { data, error } = await db.auth.signUp({
+                email,
+                password,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/admin/dashboard.html`
+                }
+            });
+
+            if (error) {
+                errorEl.textContent = 'Помилка реєстрації: ' + error.message;
+                errorEl.classList.add('show');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Зареєструватися';
+                return;
+            }
+
+            // Показуємо повідомлення про підтвердження
+            errorEl.style.backgroundColor = '#f0fdf4';
+            errorEl.style.borderColor = '#bbf7d0';
+            errorEl.style.color = '#16a34a';
+            errorEl.textContent = '✅ Реєстрація успішна! Перевірте вашу пошту для підтвердження email.';
+            errorEl.classList.add('show');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Зареєструватися';
         }
 
         async function handleGoogleLogin() {
