@@ -1004,6 +1004,11 @@ body.accessibility-mode a {
 
 /* RESPONSIVE */
 @media (max-width: 900px) {
+    .top-contacts {
+        font-size: 0.78rem;
+        gap: 8px;
+    }
+    
     .header-container {
         flex-direction: column;
         align-items: flex-start;
@@ -1032,5 +1037,11 @@ body.accessibility-mode a {
     .profile-cards,
     .footer-content {
         grid-template-columns: 1fr;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
     }
 }
