@@ -584,15 +584,22 @@
     }
 
     async function loadStats() {
-        const [newsRes, usersRes, docsRes] = await Promise.all([
-            db.from('news').select('id', { count: 'exact', head: true }),
-            db.from('admin_users').select('email', { count: 'exact', head: true }),
-            db.from('documents').select('id', { count: 'exact', head: true })
-        ]);
-        document.getElementById('stat-news').textContent = newsRes.count ?? '—';
-        document.getElementById('stat-users').textContent = usersRes.count ?? '—';
-        document.getElementById('stat-docs').textContent = docsRes.count ?? '—';
+        try {
+            const [newsRes, usersRes, docsRes] = await Promise.allSettled([
+                db.from('news').select('id', { count: 'exact', head: true }),
+                db.from('admin_users').select('email', { count: 'exact', head: true }),
+                db.from('documents').select('id', { count: 'exact', head: true })
+            ]);
+            document.getElementById('stat-news').textContent = newsRes.status === 'fulfilled' ? (newsRes.value.count ?? 0) : 0;
+            document.getElementById('stat-users').textContent = usersRes.status === 'fulfilled' ? (usersRes.value.count ?? 0) : 0;
+            document.getElementById('stat-docs').textContent = docsRes.status === 'fulfilled' ? (docsRes.value.count ?? 0) : 0;
+        } catch (e) {
+            console.error('Error loading stats:', e);
+        }
     }
+
+    // Автоматичний запуск після завантаження сторінки
+    window.addEventListener('DOMContentLoaded', init);
 
     // ─── PANEL ────────────────────────────────────────────────────────────
     function showPanel(name) {
