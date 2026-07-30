@@ -4,6 +4,8 @@
   const db = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
   const page = location.pathname === '/' || location.pathname.endsWith('/') ? '/index.html' : location.pathname;
 
+  console.log('[editable.js] Page key:', page);
+
   // 1. Загрузка измененных текстов
   const editableSelector = 'h1,h2,h3,h4,p,li,td,th,.contact-item,.top-contacts span,.leader-contact span';
   const fields = [...document.querySelectorAll(editableSelector)]
@@ -18,16 +20,31 @@
       if (el) el.innerHTML = row.value;
     });
   } catch (e) {
-    console.warn('Could not load site content:', e);
+    console.warn('[editable.js] Could not load site content:', e);
   }
 
   // 2. Аутентификация и профиль пользователя
+  // Try getSession first, then listen for auth state changes
+  let currentSession = null;
   const { data: { session } } = await db.auth.getSession();
-  
-  if (session) {
-    const email = session.user.email.toLowerCase();
+  currentSession = session;
+
+  // Also listen for auth state changes (handles redirects, token refresh)
+  db.auth.onAuthStateChange((event, sess) => {
+    console.log('[editable.js] Auth state changed:', event);
+    if (event === 'SIGNED_IN' && !currentSession && sess) {
+      currentSession = sess;
+      // Re-init if we just got a session
+      location.reload();
+    }
+  });
+
+  if (currentSession) {
+    const email = currentSession.user.email.toLowerCase();
     const username = email.split('@')[0];
     const avatarUrl = `https://www.gravatar.com/avatar/${md5Hex(email)}?d=mp&s=80`;
+
+    console.log('[editable.js] Authenticated as:', email);
 
     // Синхронизация кнопки входа в шапке (Профиль пользователя)
     const loginBtns = document.querySelectorAll('.btn-login-link');
@@ -42,14 +59,38 @@
     });
 
     // 3. Инлайн-редактирование для админов
-    const { data: member } = await db.from('admin_users').select('role').eq('email', email).maybeSingle();
-    if (member && ['admin','super_admin'].includes(member.role)) {
-      setupInlineEditor(db, page, fields, email);
+    // Check admin_users table first
+    let isAdmin = false;
+    try {
+      const { data: member, error: memberErr } = await db.from('admin_users').select('role').eq('email', email).maybeSingle();
+      if (memberErr) {
+        console.warn('[editable.js] admin_users query error:', memberErr.message);
+      }
+      if (member && ['admin','super_admin'].includes(member.role)) {
+        isAdmin = true;
+        console.log('[editable.js] Admin role confirmed from DB:', member.role);
+      }
+    } catch (e) {
+      console.warn('[editable.js] admin_users check failed:', e);
     }
+
+    // Fallback: check SUPER_ADMIN_EMAIL from config
+    if (!isAdmin && window.SUPER_ADMIN_EMAIL && email === window.SUPER_ADMIN_EMAIL.toLowerCase()) {
+      isAdmin = true;
+      console.log('[editable.js] Admin confirmed via SUPER_ADMIN_EMAIL fallback');
+    }
+
+    if (isAdmin) {
+      setupInlineEditor(db, page, fields, email, currentSession);
+    } else {
+      console.log('[editable.js] User is not an admin, editor not activated');
+    }
+  } else {
+    console.log('[editable.js] No active session');
   }
 
   // 4. Инициализация блока комментариев
-  initCommentsSection(db, page, session);
+  initCommentsSection(db, page, currentSession);
 })();
 
 function md5Hex(str) {
@@ -62,17 +103,17 @@ function md5Hex(str) {
   return Math.abs(hash).toString(16);
 }
 
-function setupInlineEditor(db, page, fields, email) {
+function setupInlineEditor(db, page, fields, email, session) {
   const style = document.createElement('style');
-  style.textContent = `#edit-toolbar{position:fixed;right:20px;bottom:20px;z-index:9999;display:flex;gap:8px;align-items:center;font:14px system-ui}#edit-toolbar button,#edit-toolbar a{border:0;border-radius:7px;padding:10px 13px;color:#fff;text-decoration:none;cursor:pointer;background:#0f2942;box-shadow:0 4px 12px rgba(0,0,0,0.15)}#edit-toolbar .save{background:#16803a;display:none}body.edit-mode [data-editable]{outline:2px dashed #2563eb;outline-offset:3px;cursor:text}body.edit-mode [data-editable]:focus{outline-color:#16803a}`;
+  style.textContent = `#edit-toolbar{position:fixed;right:20px;bottom:20px;z-index:9999;display:flex;gap:8px;align-items:center;font:14px system-ui}#edit-toolbar button,#edit-toolbar a{border:0;border-radius:7px;padding:10px 13px;color:#fff;text-decoration:none;cursor:pointer;background:#0f2942;box-shadow:0 4px 12px rgba(0,0,0,0.15)}#edit-toolbar .save{background:#16803a;display:none}#edit-toolbar .status{font-size:12px;color:#94a3b8;max-width:200px;text-align:right}body.edit-mode [data-editable]{outline:2px dashed #2563eb;outline-offset:3px;cursor:text}body.edit-mode [data-editable]:focus{outline-color:#16803a}`;
   document.head.append(style);
 
   const bar = document.createElement('div');
   bar.id = 'edit-toolbar';
-  bar.innerHTML = `<a href="admin/dashboard.html"><i class="fa-solid fa-gauge"></i> Адмін-панель</a><button class="save"><i class="fa-solid fa-floppy-disk"></i> Зберегти зміни</button><button class="toggle"><i class="fa-solid fa-pen-to-square"></i> Редагувати сайт</button>`;
+  bar.innerHTML = `<span class="status">✅ Режим адміна</span><a href="admin/dashboard.html"><i class="fa-solid fa-gauge"></i> Адмін-панель</a><button class="save"><i class="fa-solid fa-floppy-disk"></i> Зберегти зміни</button><button class="toggle"><i class="fa-solid fa-pen-to-square"></i> Редагувати сайт</button>`;
   document.body.append(bar);
 
-  const toggle = bar.querySelector('.toggle'), save = bar.querySelector('.save');
+  const toggle = bar.querySelector('.toggle'), save = bar.querySelector('.save'), status = bar.querySelector('.status');
   let active = false;
 
   toggle.onclick = () => {
@@ -81,10 +122,24 @@ function setupInlineEditor(db, page, fields, email) {
     fields.forEach(el => el.contentEditable = String(active));
     toggle.innerHTML = active ? '<i class="fa-solid fa-xmark"></i> Вийти з редагування' : '<i class="fa-solid fa-pen-to-square"></i> Редагувати сайт';
     save.style.display = active ? 'block' : 'none';
+    status.textContent = active ? '✏️ Режим редагування' : '✅ Режим адміна';
   };
 
   save.onclick = async () => {
-    save.disabled = true; save.textContent = 'Зберігаю…';
+    save.disabled = true;
+    save.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Зберігаю…';
+    status.textContent = '⏳ Збереження...';
+
+    // Refresh session before save to ensure token is fresh
+    const { data: { session: freshSession } } = await db.auth.getSession();
+    if (!freshSession) {
+      alert('❌ Сесія закінчилась. Будь ласка, увійдіть знову.');
+      status.textContent = '❌ Сесія закінчилась';
+      save.disabled = false;
+      save.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Зберегти зміни';
+      return;
+    }
+
     const rows = fields.map(el => ({
       key: el.dataset.editable,
       page,
@@ -92,12 +147,18 @@ function setupInlineEditor(db, page, fields, email) {
       updated_by: email,
       updated_at: new Date().toISOString()
     }));
+
+    console.log('[editable.js] Saving', rows.length, 'fields...');
     
     const { error } = await db.from('site_content').upsert(rows, { onConflict: 'key' });
     if (error) {
-      alert(`Помилка збереження: ${error.message}`);
+      console.error('[editable.js] Save error:', error);
+      alert(`❌ Помилка збереження: ${error.message}\n\nКод: ${error.code || 'N/A'}\nДеталі: ${error.details || 'N/A'}\nПідказка: ${error.hint || 'N/A'}`);
+      status.textContent = '❌ Помилка збереження';
     } else {
+      console.log('[editable.js] Save successful!');
       alert('✅ Зміни на сайті успішно збережено!');
+      status.textContent = '✅ Збережено!';
     }
     save.disabled = false;
     save.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Зберегти зміни';
@@ -147,8 +208,16 @@ async function initCommentsSection(db, page, session) {
   // Проверка роли пользователя
   let currentUserRole = null;
   if (userEmail) {
-    const { data: member } = await db.from('admin_users').select('role').eq('email', userEmail).maybeSingle();
-    currentUserRole = member ? member.role : null;
+    try {
+      const { data: member } = await db.from('admin_users').select('role').eq('email', userEmail).maybeSingle();
+      currentUserRole = member ? member.role : null;
+    } catch (e) {
+      console.warn('[editable.js] Could not check user role for comments:', e);
+    }
+    // Fallback
+    if (!currentUserRole && window.SUPER_ADMIN_EMAIL && userEmail === window.SUPER_ADMIN_EMAIL.toLowerCase()) {
+      currentUserRole = 'super_admin';
+    }
   }
 
   // Загрузка комментариев

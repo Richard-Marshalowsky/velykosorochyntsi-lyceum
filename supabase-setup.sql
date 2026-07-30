@@ -62,3 +62,22 @@ insert into public.admin_users(email, role) values
 on conflict (email) do update set role = excluded.role;
 
 delete from public.admin_users where email = 'simplejoper@gmail.com';
+
+-- CRITICAL: Grant table-level permissions to PostgreSQL roles
+-- Without these, RLS policies alone won't allow any operations
+GRANT ALL ON public.site_content TO authenticated;
+GRANT ALL ON public.site_content TO anon;
+GRANT SELECT ON public.site_content TO anon;
+
+GRANT ALL ON public.admin_users TO authenticated;
+GRANT SELECT ON public.admin_users TO anon;
+
+GRANT ALL ON public.news TO authenticated;
+GRANT SELECT ON public.news TO anon;
+
+GRANT ALL ON public.comments TO authenticated;
+GRANT SELECT ON public.comments TO anon;
+
+-- Also grant usage on sequences if any
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO anon;
