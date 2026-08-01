@@ -1002,27 +1002,60 @@ body.accessibility-mode a {
     font-weight: 700 !important;
 }
 
-/* RESPONSIVE */
+/* RESPONSIVE — TABLETS */
 @media (max-width: 900px) {
-    .top-contacts {
-        font-size: 0.78rem;
+    .top-bar-content {
+        flex-direction: column;
+        align-items: stretch;
         gap: 8px;
     }
-    
+
+    .top-contacts {
+        font-size: 0.75rem;
+        gap: 6px;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .top-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .search-box input {
+        width: 100%;
+        min-width: 0;
+    }
+
     .header-container {
         flex-direction: column;
         align-items: flex-start;
+        gap: 12px;
     }
-    
+
+    .header-edrpou {
+        align-self: flex-start;
+    }
+
+    .brand-title {
+        font-size: 1.1rem;
+    }
+
     .hero-container,
     .content-layout {
         grid-template-columns: 1fr;
     }
-    
+
     .mobile-menu-toggle {
         display: block;
     }
-    
+
     .nav-list {
         display: none;
         width: 100%;
@@ -1033,15 +1066,474 @@ body.accessibility-mode a {
         display: flex;
     }
 
-    .stats-row,
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
     .profile-cards,
     .footer-content {
         grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     table {
         display: block;
         overflow-x: auto;
         white-space: nowrap;
+    }
+
+    .hero-image-holder {
+        height: 280px;
+    }
+
+    .hero-overlay-card h2 {
+        font-size: 1.2rem;
+    }
+
+    .hero-overlay-card p {
+        font-size: 0.85rem;
+    }
+
+    .announcement-content {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .ticker-text {
+        flex-basis: 100%;
+        order: 3;
+    }
+
+    .tiles-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .leader-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .leader-contact {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+
+/* RESPONSIVE — PHONES */
+@media (max-width: 600px) {
+    html {
+        font-size: 15px;
+    }
+
+    .container {
+        padding: 0 10px;
+    }
+
+    /* TOP BAR */
+    .top-bar {
+        padding: 6px 0;
+    }
+
+    .top-bar-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+
+    .top-contacts {
+        flex-direction: column;
+        gap: 3px;
+        font-size: 0.72rem;
+        align-items: flex-start;
+    }
+
+    .top-contacts span {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .top-actions {
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: flex-start;
+    }
+
+    .btn-top-action {
+        font-size: 0.72rem;
+        padding: 4px 8px;
+    }
+
+    .search-box {
+        flex: 1 1 100%;
+        order: 10;
+    }
+
+    .search-box input {
+        width: 100%;
+        font-size: 0.78rem;
+    }
+
+    /* HEADER */
+    .main-header {
+        padding: 10px 0;
+    }
+
+    .header-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .brand-logo {
+        gap: 10px;
+    }
+
+    .logo-emblem {
+        width: 44px;
+        height: 44px;
+        font-size: 1.3rem;
+    }
+
+    .brand-sub {
+        font-size: 0.65rem;
+        letter-spacing: 0.4px;
+    }
+
+    .brand-title {
+        font-size: 0.95rem;
+        line-height: 1.2;
+    }
+
+    .brand-tagline {
+        font-size: 0.7rem;
+    }
+
+    .header-edrpou {
+        padding: 4px 10px;
+        font-size: 0.78rem;
+    }
+
+    /* NAV */
+    .nav-item > a {
+        padding: 11px 14px;
+        font-size: 0.85rem;
+    }
+
+    /* ANNOUNCEMENT */
+    .announcement-banner {
+        font-size: 0.8rem;
+        padding: 6px 0;
+    }
+
+    .announcement-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .badge-urgent {
+        font-size: 0.7rem;
+    }
+
+    .ticker-text {
+        font-size: 0.8rem;
+        flex-basis: auto;
+        order: 0;
+    }
+
+    .btn-ticker {
+        font-size: 0.78rem;
+    }
+
+    /* HERO */
+    .hero-section {
+        padding: 12px 0;
+    }
+
+    .hero-container {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .hero-image-holder {
+        height: 220px;
+    }
+
+    .hero-overlay-card {
+        padding: 16px 14px 14px;
+    }
+
+    .hero-overlay-card h2 {
+        font-size: 1.05rem;
+        margin-bottom: 4px;
+    }
+
+    .hero-overlay-card p {
+        font-size: 0.8rem;
+        margin-bottom: 10px;
+        max-width: 100%;
+    }
+
+    .hero-buttons {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        padding: 7px 12px;
+        font-size: 0.82rem;
+    }
+
+    /* QUICK TILES */
+    .quick-tiles-section {
+        padding: 8px 0 14px;
+    }
+
+    .tiles-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .tile-card {
+        padding: 10px;
+        gap: 6px;
+    }
+
+    .tile-icon {
+        font-size: 1.3rem;
+    }
+
+    .tile-body h4 {
+        font-size: 0.82rem;
+    }
+
+    .tile-body p {
+        font-size: 0.72rem;
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+        padding: 8px 0 24px;
+    }
+
+    .content-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .primary-column {
+        gap: 16px;
+    }
+
+    .content-block {
+        padding: 14px;
+    }
+
+    .block-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding-bottom: 8px;
+        margin-bottom: 14px;
+    }
+
+    .block-header h2 {
+        font-size: 1.05rem;
+    }
+
+    /* STATS */
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .stat-box {
+        padding: 10px 8px;
+    }
+
+    .stat-num {
+        font-size: 1.1rem;
+    }
+
+    .stat-desc {
+        font-size: 0.7rem;
+    }
+
+    /* PROFILES */
+    .profile-cards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .profile-card {
+        padding: 12px;
+    }
+
+    /* LEADERSHIP */
+    .leader-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 14px;
+        gap: 10px;
+    }
+
+    .leader-avatar {
+        width: 52px;
+        height: 52px;
+        font-size: 1.6rem;
+    }
+
+    .leader-info h3 {
+        font-size: 0.95rem;
+    }
+
+    .leader-contact {
+        flex-direction: column;
+        gap: 4px;
+        align-items: center;
+    }
+
+    /* TABS */
+    .tab-buttons {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 2px;
+    }
+
+    .tab-btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* TABLES */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -14px;
+        padding: 0 14px;
+    }
+
+    .data-table {
+        font-size: 0.78rem;
+        min-width: 500px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 6px 8px;
+    }
+
+    /* FORMS */
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .form-container {
+        padding: 12px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 0.85rem;
+    }
+
+    /* SIDEBAR */
+    .sidebar-column {
+        gap: 14px;
+    }
+
+    .widget-body {
+        padding: 10px;
+    }
+
+    .ext-link-item {
+        font-size: 0.75rem;
+        padding: 6px;
+    }
+
+    /* NEWS CARDS */
+    .news-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    /* FOOTER */
+    .site-footer {
+        padding-top: 20px;
+    }
+
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding-bottom: 16px;
+    }
+
+    .footer-col h4 {
+        font-size: 0.92rem;
+        margin-bottom: 8px;
+    }
+
+    .footer-col p {
+        font-size: 0.8rem;
+    }
+
+    .footer-bottom {
+        padding: 10px 0;
+        font-size: 0.72rem;
+    }
+
+    .bottom-flex {
+        flex-direction: column;
+        text-align: center;
+        gap: 4px;
+    }
+
+    /* NEWS MODAL */
+    .news-modal-overlay .news-modal-content {
+        width: 95%;
+        max-height: 85vh;
+        padding: 16px;
+    }
+}
+
+/* Small phones */
+@media (max-width: 380px) {
+    .tiles-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .hero-image-holder {
+        height: 180px;
+    }
+
+    .brand-title {
+        font-size: 0.85rem;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        text-align: center;
+        width: 100%;
     }
 }
