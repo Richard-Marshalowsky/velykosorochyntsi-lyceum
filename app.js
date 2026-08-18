@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();
     initAccessibilityMode();
     initSearch();
+    initTrustForm();
 });
 
 // 1. MOBILE MENU TOGGLE
@@ -11,29 +12,49 @@ function initMobileMenu() {
     const mobileBtn = document.getElementById('mobile-menu-btn');
     const navList = document.getElementById('nav-list');
 
-    if (mobileBtn && navList) {
-        mobileBtn.addEventListener('click', () => {
-            navList.classList.toggle('open');
-        });
-    }
+    if (!mobileBtn || !navList) return;
+
+    mobileBtn.setAttribute('aria-expanded', String(navList.classList.contains('open')));
+    mobileBtn.setAttribute('aria-controls', navList.id);
+
+    const closeMenu = () => {
+        navList.classList.remove('open');
+        mobileBtn.setAttribute('aria-expanded', 'false');
+    };
+
+    mobileBtn.addEventListener('click', () => {
+        const isOpen = navList.classList.toggle('open');
+        mobileBtn.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    navList.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeMenu();
+    });
 }
 
 // 2. ACCESSIBILITY MODE TOGGLE (ВЕРСІЯ ДЛЯ СЛАБОЗОРУХ)
 function initAccessibilityMode() {
     const accessBtn = document.getElementById('accessibility-btn');
-    
-    if (accessBtn) {
-        accessBtn.addEventListener('click', () => {
-            document.body.classList.toggle('accessibility-mode');
-            const isAccess = document.body.classList.contains('accessibility-mode');
-            
-            if (isAccess) {
-                accessBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i> Звичайна версія';
-            } else {
-                accessBtn.innerHTML = '<i class="fa-solid fa-eye"></i> Версія для слабозорих';
-            }
-        });
-    }
+    if (!accessBtn) return;
+
+    const storageKey = 'lyceum-accessibility-mode';
+    const applyMode = enabled => {
+        document.body.classList.toggle('accessibility-mode', enabled);
+        accessBtn.setAttribute('aria-pressed', String(enabled));
+        accessBtn.innerHTML = enabled
+            ? '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i> Звичайна версія'
+            : '<i class="fa-solid fa-eye" aria-hidden="true"></i> Версія для слабозорих';
+    };
+
+    applyMode(localStorage.getItem(storageKey) === 'true');
+
+    accessBtn.addEventListener('click', () => {
+        const enabled = !document.body.classList.contains('accessibility-mode');
+        localStorage.setItem(storageKey, String(enabled));
+        applyMode(enabled);
+    });
 }
 
 // 3. TAB SWITCHER (FOR SCHEDULE & BELLS)
@@ -108,29 +129,79 @@ function closeNewsModal(e) {
     document.getElementById('news-modal').classList.remove('open');
 }
 
-// 6. TRUST BOX FORM SUBMISSION HANDLER
-function handleTrustSubmit(event) {
-    event.preventDefault();
+// 6. TRUST BOX: compose a real email instead of pretending a message was sent
+function initTrustForm() {
+    const form = document.getElementById('trust-form');
+    if (!form) return;
+
     const feedback = document.getElementById('trust-feedback');
-    const name = document.getElementById('trust-name').value || 'Анонімно';
-    
-    feedback.style.color = '#16a34a';
-    feedback.innerHTML = `<i class="fa-solid fa-circle-check"></i> Дякуємо, ${name}! Ваше звернення успішно передано до адміністрації ліцею.`;
-    
-    document.getElementById('trust-form').reset();
+    form.addEventListener('submit', event => {
+        event.preventDefault();
+
+        const name = document.getElementById('trust-name')?.value.trim() || 'Анонімно';
+        const status = document.getElementById('trust-status')?.value || '';
+        const subject = document.getElementById('trust-subject')?.value.trim();
+        const message = document.getElementById('trust-message')?.value.trim();
+        if (!subject || !message) return;
+
+        const statusLabels = {
+            student: 'Учень / Учениця',
+            parent: 'Батьки / Опікуни',
+            teacher: 'Вчитель / Працівник',
+            other: 'Інше'
+        };
+        const body = [
+            'Ім’я: ' + name,
+            'Категорія: ' + (statusLabels[status] || status),
+            '',
+            message
+        ].join('\r\n');
+
+        if (feedback) {
+            feedback.textContent = 'Відкриваємо вашу поштову програму. Перевірте текст листа та надішліть його самостійно.';
+            feedback.style.color = '#166534';
+        }
+
+        window.location.href = 'mailto:sorint@ukr.net?subject='
+            + encodeURIComponent('Скринька довіри: ' + subject)
+            + '&body=' + encodeURIComponent(body);
+    });
 }
 
-// 7. SITE SEARCH SIMULATOR
+// 7. SIMPLE SITE SEARCH
 function initSearch() {
-    const searchBtn = document.getElementById('search-btn');
+    const form = document.getElementById('site-search-form');
     const searchInput = document.getElementById('site-search');
+    const feedback = document.getElementById('search-feedback');
+    if (!form || !searchInput || !feedback) return;
 
-    if (searchBtn && searchInput) {
-        searchBtn.addEventListener('click', () => {
-            const query = searchInput.value.trim();
-            if (query) {
-                alert(`Пошук за запитом: "${query}". Успішно знайдено релевантні розділи на офіційному сайті.`);
-            }
-        });
-    }
+    const pages = [
+        { href: 'index.html', label: 'Головна', terms: ['головна', 'ліцей', 'новини', 'профіль', 'it', 'спорт'] },
+        { href: 'pro-lyceum.html', label: 'Про ліцей', terms: ['про ліцей', 'історія', 'керівництво', 'документи', 'директор'] },
+        { href: 'vstup.html', label: 'Вступникам', terms: ['вступ', 'прийом', 'документи', '5 клас', '11 клас'] },
+        { href: 'rozklad.html', label: 'Розклад уроків', terms: ['розклад', 'уроки', 'дзвінки', 'клас'] },
+        { href: 'kontakty.html', label: 'Контакти та скринька довіри', terms: ['контакти', 'адреса', 'телефон', 'довіри', 'звернення'] }
+    ];
+
+    form.addEventListener('submit', event => {
+        event.preventDefault();
+        const query = searchInput.value.trim().toLocaleLowerCase('uk-UA');
+        if (!query) {
+            feedback.textContent = 'Введіть слово для пошуку.';
+            return;
+        }
+
+        const match = pages.find(page =>
+            page.label.toLocaleLowerCase('uk-UA').includes(query)
+            || page.terms.some(term => term.includes(query) || query.includes(term))
+        );
+
+        if (match) {
+            feedback.textContent = 'Переходимо до розділу: ' + match.label + '.';
+            window.location.href = match.href;
+            return;
+        }
+
+        feedback.textContent = 'Нічого не знайдено. Спробуйте: вступ, розклад, контакти або документи.';
+    });
 }
