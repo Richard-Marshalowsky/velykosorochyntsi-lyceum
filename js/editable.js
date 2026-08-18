@@ -17,7 +17,7 @@
     const { data: content } = await db.from('site_content').select('key,value').eq('page', page);
     (content || []).forEach(row => {
       const el = document.querySelector(`[data-editable="${CSS.escape(row.key)}"]`);
-      if (el) el.innerHTML = row.value;
+      if (el) el.innerHTML = sanitizeEditableHtml(row.value);
     });
   } catch (e) {
     console.warn('[editable.js] Could not load site content:', e);
@@ -143,7 +143,7 @@ function setupInlineEditor(db, page, fields, email, session) {
     const rows = fields.map(el => ({
       key: el.dataset.editable,
       page,
-      value: el.innerHTML,
+      value: sanitizeEditableHtml(el.innerHTML),
       updated_by: email,
       updated_at: new Date().toISOString()
     }));
@@ -163,6 +163,42 @@ function setupInlineEditor(db, page, fields, email, session) {
     save.disabled = false;
     save.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Зберегти зміни';
   };
+}
+
+
+function sanitizeEditableHtml(html) {
+  const allowedTags = new Set(['A', 'B', 'BR', 'EM', 'I', 'SPAN', 'STRONG', 'U']);
+  const template = document.createElement('template');
+  template.innerHTML = html;
+
+  template.content.querySelectorAll('*').forEach(element => {
+    if (!allowedTags.has(element.tagName)) {
+      element.replaceWith(...element.childNodes);
+      return;
+    }
+
+    [...element.attributes].forEach(attribute => {
+      const name = attribute.name.toLowerCase();
+      const value = attribute.value.trim();
+      const allowedLinkAttribute = element.tagName === 'A'
+        && ['href', 'title', 'target', 'rel'].includes(name);
+
+      if (!allowedLinkAttribute) {
+        element.removeAttribute(attribute.name);
+        return;
+      }
+
+      if (name === 'href' && !/^(https?:|mailto:|\/|#)/i.test(value)) {
+        element.removeAttribute('href');
+      }
+    });
+
+    if (element.tagName === 'A' && element.getAttribute('target') === '_blank') {
+      element.setAttribute('rel', 'noopener noreferrer');
+    }
+  });
+
+  return template.innerHTML;
 }
 
 async function initCommentsSection(db, page, session) {
