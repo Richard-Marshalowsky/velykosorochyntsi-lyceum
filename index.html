@@ -88,16 +88,18 @@
                 <span><i class="fa-solid fa-location-dot"></i> вул. Миргородська, 40, с. Великі Сорочинці, Полтавська обл., 37645</span>
             </div>
             <div class="top-actions">
-                <button id="accessibility-btn" class="btn-top-action" title="Версія для слабозорих">
+                <button id="accessibility-btn" class="btn-top-action" type="button" title="Версія для слабозорих" aria-pressed="false">
                     <i class="fa-solid fa-eye"></i> Версія для слабозорих
                 </button>
                 <a href="admin/login.html" class="btn-top-action btn-login-link" title="Реєстрація або вхід для адміністраторів">
                     <i class="fa-solid fa-right-to-bracket"></i> Реєстрація / Вхід
                 </a>
-                <div class="search-box">
-                    <input type="text" id="site-search" placeholder="Пошук по сайту...">
-                    <button id="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
-                </div>
+                <form class="search-box" id="site-search-form" role="search">
+                    <label class="sr-only" for="site-search">Пошук по сайту</label>
+                    <input type="search" id="site-search" placeholder="Пошук по сайту..." autocomplete="off">
+                    <button id="search-btn" type="submit" aria-label="Знайти"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
+                    <span id="search-feedback" class="sr-only" role="status" aria-live="polite"></span>
+                </form>
             </div>
         </div>
     </div>
@@ -125,7 +127,7 @@
     <!-- NAVIGATION MENU -->
     <nav class="main-nav">
         <div class="container nav-container">
-            <button class="mobile-menu-toggle" id="mobile-menu-btn">
+            <button class="mobile-menu-toggle" id="mobile-menu-btn" type="button" aria-expanded="false" aria-controls="nav-list">
                 <i class="fa-solid fa-bars"></i> Меню сайту
             </button>
             <ul class="nav-list" id="nav-list">
