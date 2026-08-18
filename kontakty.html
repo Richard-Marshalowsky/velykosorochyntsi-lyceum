@@ -113,7 +113,7 @@
                     </div>
                     <div class="form-container">
                         <p class="form-help-text">Ви можете залишити звернення, пропозицію чи повідомити про важливу ситуацію адміністрацію ліцею. Повідомлення можна надіслати анонімно або із зазначенням контактних даних.</p>
-                        <form id="trust-form" onsubmit="handleTrustSubmit(event)">
+                        <form id="trust-form">
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="trust-name">Ваше ім'я (необов'язково):</label>
@@ -139,7 +139,7 @@
                             </div>
                             <button type="submit" class="btn-submit"><i class="fa-solid fa-paper-plane"></i> Надіслати звернення</button>
                         </form>
-                        <div id="trust-feedback" class="form-feedback"></div>
+                        <div id="trust-feedback" class="form-feedback" role="status" aria-live="polite"></div>
                     </div>
                 </section>
 
