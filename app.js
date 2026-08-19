@@ -198,31 +198,34 @@ function initTrustForm() {
         if (submitBtn) submitBtn.disabled = true;
 
         try {
-            // Save to Supabase trust_messages table (100% reliable, zero external redirects, Avast-safe)
-            if (window.supabase && window.SUPABASE_URL) {
-                const db = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-                const { error } = await db.from('trust_messages').insert([{
-                    name,
-                    status,
-                    subject,
-                    message
-                }]);
-                if (error) {
-                    console.warn('[TrustForm Supabase warn]', error);
-                }
+            if (!window.supabase || !window.SUPABASE_URL) {
+                throw new Error('База даних недоступна. Зверніться до адміністратора.');
+            }
+
+            const db = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            const { error } = await db.from('trust_messages').insert([{
+                name,
+                status,
+                subject,
+                message
+            }]);
+
+            if (error) {
+                console.error('[TrustForm] Supabase error:', error.code, error.message);
+                throw new Error('Помилка збереження: ' + (error.message || error.code));
             }
 
             localStorage.setItem('trust_form_last_sent', Date.now().toString());
             if (feedback) {
                 feedback.style.color = '#166534';
-                feedback.textContent = 'Ваше звернення успішно надіслано адміністрації! Дякуємо.';
+                feedback.textContent = '✅ Ваше звернення успішно надіслано адміністрації! Дякуємо.';
             }
             form.reset();
         } catch (err) {
             console.error('[TrustForm Error]', err);
             if (feedback) {
                 feedback.style.color = '#dc2626';
-                feedback.textContent = 'Помилка при надсиланні звернення. Спробуйте пізніше.';
+                feedback.textContent = '❌ ' + (err.message || 'Помилка при надсиланні звернення. Спробуйте пізніше.');
             }
         } finally {
             if (submitBtn) submitBtn.disabled = false;
