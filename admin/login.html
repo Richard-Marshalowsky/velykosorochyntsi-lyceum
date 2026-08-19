@@ -203,7 +203,7 @@
         <div class="login-card">
             <h2><i class="fa-solid fa-lock"></i> Вхід до адмін-панелі</h2>
 
-            <form id="login-form" onsubmit="handleLogin(event)">
+            <form id="login-form">
                 <div class="form-group">
                     <label for="email">Електронна пошта</label>
                     <div class="input-wrapper">
@@ -242,92 +242,9 @@
         </a>
     </div>
 
-    <!-- Supabase JS SDK -->
+    <!-- External JS SDK & Logic -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
-    <script>
-        // Ініціалізація Supabase
-        const { createClient } = supabase;
-        const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // Якщо вже залогінений — редирект одразу на дашборд
-        db.auth.getSession().then(({ data: { session } }) => {
-            if (session) window.location.href = 'dashboard.html';
-        });
-
-        // === BRUTE-FORCE PROTECTION: persistent cross-tab backoff ===
-        let loginFailures = parseInt(localStorage.getItem('login_failures') || '0', 10);
-        let lockedUntil = parseInt(localStorage.getItem('login_locked_until') || '0', 10);
-
-        function getBackoffDelay(failures) {
-            // 0 fail=0s, 1=2s, 2=4s, 3=8s, 4=16s, 5+=30s
-            if (failures <= 0) return 0;
-            return Math.min(2 ** failures * 1000, 30000);
-        }
-
-        async function handleLogin(e) {
-            e.preventDefault();
-
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const btn = document.getElementById('login-btn');
-            const errorEl = document.getElementById('error-msg');
-
-            // Check lockout
-            const now = Date.now();
-            if (lockedUntil > now) {
-                const secsLeft = Math.ceil((lockedUntil - now) / 1000);
-                errorEl.textContent = `⏳ Забагато невдалих спроб. Зачекайте ${secsLeft} сек. перед наступною спробою.`;
-                errorEl.classList.add('show');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Вхід...';
-            errorEl.classList.remove('show');
-
-            const { data, error } = await db.auth.signInWithPassword({ email, password });
-
-            if (error) {
-                loginFailures++;
-                const delay = getBackoffDelay(loginFailures);
-                lockedUntil = Date.now() + delay;
-                localStorage.setItem('login_failures', loginFailures.toString());
-                localStorage.setItem('login_locked_until', lockedUntil.toString());
-
-                let msg = 'Невірний email або пароль. Перевірте дані та спробуйте ще раз.';
-                if (loginFailures >= 3 && delay > 0) {
-                    msg += ` (Спроба ${loginFailures}. Наступна спроба через ${delay / 1000} сек.)`;
-                }
-                errorEl.textContent = msg;
-                errorEl.classList.add('show');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Увійти';
-                return;
-            }
-
-            // Успішний вхід — скидаємо лічильник і редиректимо
-            localStorage.removeItem('login_failures');
-            localStorage.removeItem('login_locked_until');
-            window.location.href = 'dashboard.html';
-        }
-
-        async function handleGoogleLogin() {
-            const errorEl = document.getElementById('error-msg');
-            errorEl.classList.remove('show');
-
-            const { error } = await db.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/admin/login.html`
-                }
-            });
-
-            if (error) {
-                errorEl.textContent = `Google sign-in error: ${error.message}`;
-                errorEl.classList.add('show');
-            }
-        }
-    </script>
+    <script src="login.js"></script>
 </body>
 </html>
