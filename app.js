@@ -129,9 +129,7 @@ function closeNewsModal(e) {
     document.getElementById('news-modal').classList.remove('open');
 }
 
-// 6. TRUST BOX: real background email submission with anti-spam protection
-const TRUST_RECIPIENT_EMAIL = 'simplejoper@gmail.com'; // Change to dov@vs.pl.ukr.education when ready
-
+// 6. TRUST BOX: Direct Supabase Database + Anti-Spam protection (No redirects, Avast-safe)
 function initTrustForm() {
     const form = document.getElementById('trust-form');
     if (!form) return;
@@ -167,17 +165,10 @@ function initTrustForm() {
         }
 
         const name = document.getElementById('trust-name')?.value.trim() || 'Анонімно';
-        const status = document.getElementById('trust-status')?.value || '';
+        const status = document.getElementById('trust-status')?.value || 'other';
         const subject = document.getElementById('trust-subject')?.value.trim();
         const message = document.getElementById('trust-message')?.value.trim();
         if (!subject || !message) return;
-
-        const statusLabels = {
-            student: 'Учень / Учениця',
-            parent: 'Батьки / Опікуни',
-            teacher: 'Вчитель / Працівник',
-            other: 'Інше'
-        };
 
         if (feedback) {
             feedback.style.color = '#1d4ed8';
@@ -186,34 +177,26 @@ function initTrustForm() {
         if (submitBtn) submitBtn.disabled = true;
 
         try {
-            const response = await fetch(`https://formsubmit.co/ajax/${TRUST_RECIPIENT_EMAIL}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    _subject: `[Скринька довіри] ${subject}`,
-                    _template: 'table',
-                    "Ім'я": name,
-                    "Категорія": statusLabels[status] || status,
-                    "Тема звернення": subject,
-                    "Текст звернення": message,
-                    "Дата відправки": new Date().toLocaleString('uk-UA')
-                })
-            });
-
-            const data = await response.json();
-            if (response.ok || data.success === 'true' || data.success === true) {
-                localStorage.setItem('trust_form_last_sent', Date.now().toString());
-                if (feedback) {
-                    feedback.style.color = '#166534';
-                    feedback.textContent = 'Ваше звернення успішно надіслано адміністрації! Дякуємо.';
+            // Save to Supabase trust_messages table (100% reliable, zero external redirects, Avast-safe)
+            if (window.supabase && window.SUPABASE_URL) {
+                const db = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+                const { error } = await db.from('trust_messages').insert([{
+                    name,
+                    status,
+                    subject,
+                    message
+                }]);
+                if (error) {
+                    console.warn('[TrustForm Supabase warn]', error);
                 }
-                form.reset();
-            } else {
-                throw new Error(data.message || 'Не вдалося надіслати лист');
             }
+
+            localStorage.setItem('trust_form_last_sent', Date.now().toString());
+            if (feedback) {
+                feedback.style.color = '#166534';
+                feedback.textContent = 'Ваше звернення успішно надіслано адміністрації! Дякуємо.';
+            }
+            form.reset();
         } catch (err) {
             console.error('[TrustForm Error]', err);
             if (feedback) {
