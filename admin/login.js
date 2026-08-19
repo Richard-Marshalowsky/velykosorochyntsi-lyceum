@@ -84,4 +84,23 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'dashboard.html';
         });
     }
+
+    const googleBtn = document.getElementById('google-btn') || document.querySelector('.btn-google');
+    if (googleBtn) {
+        googleBtn.addEventListener('click', async () => {
+            try {
+                await db.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: { redirectTo: window.location.origin + '/admin/dashboard.html' }
+                });
+            } catch (err) {
+                const errorEl = document.getElementById('error-msg');
+                if (errorEl) {
+                    errorEl.textContent = 'Помилка входу через Google: ' + err.message;
+                    errorEl.classList.add('show');
+                }
+            }
+        });
+    }
+
 });
