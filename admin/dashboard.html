@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>РђРґРјС–РЅ-РїР°РЅРµР»СЊ | Р’РµР»РёРєРѕСЃРѕСЂРѕС‡РёРЅСЃСЊРєРёР№ Р»С–С†РµР№</title>
+    <title>Адмін-панель | Великосорочинський ліцей</title>
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" type="image/svg+xml" href="../images/favicon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -135,164 +135,171 @@
     <!-- SIDEBAR -->
     <div class="sidebar">
         <div class="sidebar-brand">
-            <h2>Р’РµР»РёРєРѕСЃРѕСЂРѕС‡РёРЅСЃСЊРєРёР№ Р»С–С†РµР№</h2>
+            <h2>Великосорочинський ліцей</h2>
             <span class="role-badge" id="role-badge">...</span>
         </div>
         <div class="sidebar-user">
-            <strong id="user-email">Р—Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ...</strong>
-            РђРґРјС–РЅС–СЃС‚СЂР°С‚РѕСЂ СЃР°Р№С‚Сѓ
+            <strong id="user-email">Завантаження...</strong>
+            Адміністратор сайту
         </div>
         <nav class="sidebar-nav">
-            <div class="nav-section-title">РћСЃРЅРѕРІРЅРµ</div>
+            <div class="nav-section-title">Основне</div>
             <a onclick="showPanel('home')" id="nav-home" class="active">
-                <i class="fa-solid fa-house"></i> РћРіР»СЏРґ
+                <i class="fa-solid fa-house"></i> Огляд
             </a>
-            <div class="nav-section-title">РљРѕРЅС‚РµРЅС‚</div>
+            <div class="nav-section-title">Контент</div>
             <a onclick="showPanel('news')" id="nav-news">
-                <i class="fa-solid fa-newspaper"></i> РќРѕРІРёРЅРё С‚Р° РѕРіРѕР»РѕС€РµРЅРЅСЏ
+                <i class="fa-solid fa-newspaper"></i> Новини та оголошення
             </a>
             <div class="admin-only">
                 <a onclick="showPanel('schedule')" id="nav-schedule">
-                    <i class="fa-solid fa-calendar-check"></i> Р РѕР·РєР»Р°Рґ СѓСЂРѕРєС–РІ
+                    <i class="fa-solid fa-calendar-check"></i> Розклад уроків
                 </a>
                 <a onclick="showPanel('documents')" id="nav-documents">
-                    <i class="fa-solid fa-file-lines"></i> Р”РѕРєСѓРјРµРЅС‚Рё
+                    <i class="fa-solid fa-file-lines"></i> Документи
+                </a>
+                <a onclick="showPanel('trust')" id="nav-trust">
+                    <i class="fa-solid fa-envelope-open-text"></i> Скринька довіри
                 </a>
             </div>
             <div class="super-only">
-                <div class="nav-section-title">РђРґРјС–РЅС–СЃС‚СЂСѓРІР°РЅРЅСЏ</div>
+                <div class="nav-section-title">Адміністрування</div>
                 <a onclick="showPanel('users')" id="nav-users">
-                    <i class="fa-solid fa-users-gear"></i> РљРѕСЂРёСЃС‚СѓРІР°С‡С–
+                    <i class="fa-solid fa-users-gear"></i> Користувачі
                 </a>
                 <a onclick="showPanel('settings')" id="nav-settings">
-                    <i class="fa-solid fa-gear"></i> РќР°Р»Р°С€С‚СѓРІР°РЅРЅСЏ СЃР°Р№С‚Сѓ
+                    <i class="fa-solid fa-gear"></i> Налаштування сайту
                 </a>
             </div>
         </nav>
         <button class="btn-logout" onclick="handleLogout()">
-            <i class="fa-solid fa-right-from-bracket"></i> Р’РёР№С‚Рё
+            <i class="fa-solid fa-right-from-bracket"></i> Вийти
         </button>
     </div>
 
     <!-- MAIN AREA -->
     <div class="main-area">
         <div class="topbar">
-            <h1 id="panel-title"><i class="fa-solid fa-gauge"></i> РћРіР»СЏРґ</h1>
+            <h1 id="panel-title"><i class="fa-solid fa-gauge"></i> Огляд</h1>
             <div class="topbar-right">
                 <a href="../index.html" target="_blank">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> РџРµСЂРµРіР»СЏРЅСѓС‚Рё СЃР°Р№С‚
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Переглянути сайт
                 </a>
             </div>
         </div>
 
         <div class="content-area">
 
-            <!-- в•ђв•ђв•ђ HOME в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
+            <!-- ═══ HOME ════════════════════════════════════════════════ -->
             <div class="panel active" id="panel-home">
-                <div class="panel-title"><i class="fa-solid fa-gauge"></i> РџР°РЅРµР»СЊ РєРµСЂСѓРІР°РЅРЅСЏ</div>
+                <div class="panel-title"><i class="fa-solid fa-gauge"></i> Панель керування</div>
                 <div class="stat-grid">
                     <div class="stat-card">
-                        <div class="stat-num" id="stat-role">вЂ”</div>
-                        <div class="stat-label">Р’Р°С€Р° СЂРѕР»СЊ Сѓ СЃРёСЃС‚РµРјС–</div>
+                        <div class="stat-num" id="stat-role">—</div>
+                        <div class="stat-label">Ваша роль у системі</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-num" id="stat-news">вЂ”</div>
-                        <div class="stat-label">РќРѕРІРёРЅ РѕРїСѓР±Р»С–РєРѕРІР°РЅРѕ</div>
+                        <div class="stat-num" id="stat-news">—</div>
+                        <div class="stat-label">Новин опубліковано</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-num" id="stat-users">вЂ”</div>
-                        <div class="stat-label">РђРґРјС–РЅС–СЃС‚СЂР°С‚РѕСЂС–РІ</div>
+                        <div class="stat-num" id="stat-users">—</div>
+                        <div class="stat-label">Адміністраторів</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-num" id="stat-docs">вЂ”</div>
-                        <div class="stat-label">Р”РѕРєСѓРјРµРЅС‚С–РІ</div>
+                        <div class="stat-num" id="stat-docs">—</div>
+                        <div class="stat-label">Документів</div>
+                    </div>
+                    <div class="stat-card admin-only" style="display:none;">
+                        <div class="stat-num" id="stat-trust">—</div>
+                        <div class="stat-label">Звернень у скриньці</div>
                     </div>
                 </div>
                 <div class="form-card">
-                    <h3><i class="fa-solid fa-circle-info"></i> Р’Р°С€С– РјРѕР¶Р»РёРІРѕСЃС‚С–</h3>
+                    <h3><i class="fa-solid fa-circle-info"></i> Ваші можливості</h3>
                     <div id="role-description" style="font-size:0.88rem; color:#475569; line-height:1.8;"></div>
                 </div>
             </div>
 
-            <!-- в•ђв•ђв•ђ NEWS в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
+            <!-- ═══ NEWS ════════════════════════════════════════════════ -->
             <div class="panel" id="panel-news">
-                <div class="panel-title"><i class="fa-solid fa-newspaper"></i> РќРѕРІРёРЅРё С‚Р° РѕРіРѕР»РѕС€РµРЅРЅСЏ</div>
+                <div class="panel-title"><i class="fa-solid fa-newspaper"></i> Новини та оголошення</div>
                 <div class="feedback-msg" id="news-feedback"></div>
 
-                <!-- Р¤РѕСЂРјР° РґРѕРґР°РІР°РЅРЅСЏ/СЂРµРґР°РіСѓРІР°РЅРЅСЏ -->
+                <!-- Форма додавання/редагування -->
                 <div class="form-card" id="news-form-card">
-                    <h3 id="news-form-title"><i class="fa-solid fa-plus"></i> Р”РѕРґР°С‚Рё РЅРѕРІРёРЅСѓ / РѕРіРѕР»РѕС€РµРЅРЅСЏ</h3>
+                    <h3 id="news-form-title"><i class="fa-solid fa-plus"></i> Додати новину / оголошення</h3>
                     <input type="hidden" id="news-edit-id">
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Р—Р°РіРѕР»РѕРІРѕРє *</label>
-                            <input type="text" id="news-title" required placeholder="РљРѕСЂРѕС‚РєРёР№ Р·Р°РіРѕР»РѕРІРѕРє">
+                            <label>Заголовок *</label>
+                            <input type="text" id="news-title" required placeholder="Короткий заголовок">
                         </div>
                         <div class="form-group">
-                            <label>РљР°С‚РµРіРѕСЂС–СЏ</label>
+                            <label>Категорія</label>
                             <select id="news-category">
-                                <option value="general">Р—Р°РіР°Р»СЊРЅРµ</option>
-                                <option value="important">Р’Р°Р¶Р»РёРІРѕ</option>
-                                <option value="it">IT-РѕСЃРІС–С‚Р°</option>
-                                <option value="sport">РЎРїРѕСЂС‚</option>
+                                <option value="general">Загальне</option>
+                                <option value="important">Важливо</option>
+                                <option value="it">IT-освіта</option>
+                                <option value="sport">Спорт</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>РўРµРєСЃС‚ РЅРѕРІРёРЅРё *</label>
-                        <textarea id="news-body" rows="4" required placeholder="РџРѕРІРЅРёР№ С‚РµРєСЃС‚..."></textarea>
+                        <label>Текст новини *</label>
+                        <textarea id="news-body" rows="4" required placeholder="Повний текст..."></textarea>
                     </div>
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
                         <button class="btn-save" onclick="handleNewsSave()">
-                            <i class="fa-solid fa-paper-plane"></i> <span id="news-btn-label">РћРїСѓР±Р»С–РєСѓРІР°С‚Рё</span>
+                            <i class="fa-solid fa-paper-plane"></i> <span id="news-btn-label">Опублікувати</span>
                         </button>
                         <button class="btn-secondary" id="news-cancel-btn" onclick="cancelNewsEdit()" style="display:none;">
-                            <i class="fa-solid fa-xmark"></i> РЎРєР°СЃСѓРІР°С‚Рё
+                            <i class="fa-solid fa-xmark"></i> Скасувати
                         </button>
                     </div>
                 </div>
 
-                <!-- РЎРїРёСЃРѕРє РЅРѕРІРёРЅ -->
+                <!-- Список новин -->
                 <div class="form-card">
-                    <h3><i class="fa-solid fa-list"></i> РћРїСѓР±Р»С–РєРѕРІР°РЅС– РЅРѕРІРёРЅРё</h3>
+                    <h3><i class="fa-solid fa-list"></i> Опубліковані новини</h3>
                     <div style="overflow-x:auto;">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Р—Р°РіРѕР»РѕРІРѕРє</th>
-                                    <th>РљР°С‚РµРіРѕСЂС–СЏ</th>
-                                    <th>РђРІС‚РѕСЂ</th>
-                                    <th>Р”Р°С‚Р°</th>
-                                    <th style="width:120px;">Р”С–С—</th>
+                                    <th>Заголовок</th>
+                                    <th>Категорія</th>
+                                    <th>Автор</th>
+                                    <th>Дата</th>
+                                    <th style="width:120px;">Дії</th>
                                 </tr>
                             </thead>
                             <tbody id="news-table-body">
-                                <tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:20px;">Р—Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ...</td></tr>
+                                <tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:20px;">Завантаження...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- в•ђв•ђв•ђ SCHEDULE в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
+            <!-- ═══ SCHEDULE ════════════════════════════════════════════ -->
             <div class="panel" id="panel-schedule">
-                <div class="panel-title"><i class="fa-solid fa-calendar-check"></i> Р РѕР·РєР»Р°Рґ СѓСЂРѕРєС–РІ</div>
+                <div class="panel-title"><i class="fa-solid fa-calendar-check"></i> Розклад уроків</div>
                 <div class="feedback-msg" id="schedule-feedback"></div>
 
                 <div class="form-card">
-                    <h3><i class="fa-solid fa-chalkboard-user"></i> Р’РёР±С–СЂ РєР»Р°СЃСѓ</h3>
+                    <h3><i class="fa-solid fa-chalkboard-user"></i> Вибір класу</h3>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>РљР»Р°СЃ</label>
+                            <label>Клас</label>
                             <select id="schedule-class" onchange="loadSchedule()">
-                                <option value="">вЂ” РћР±РµСЂС–С‚СЊ РєР»Р°СЃ вЂ”</option>
-                                <option>5-Рђ</option><option>5-Р‘</option>
-                                <option>6-Рђ</option><option>6-Р‘</option>
-                                <option>7-Рђ</option><option>7-Р‘</option>
-                                <option>8-Рђ</option><option>8-Р‘</option>
-                                <option>9-Рђ</option><option>9-Р‘</option>
-                                <option>10-Рђ</option><option>10-Р‘</option>
-                                <option>11-Рђ</option><option>11-Р‘</option>
+                                <option value="">— Оберіть клас —</option>
+                                <option>5-А</option><option>5-Б</option>
+                                <option>6-А</option><option>6-Б</option>
+                                <option>7-А</option><option>7-Б</option>
+                                <option>8-А</option><option>8-Б</option>
+                                <option>9-А</option><option>9-Б</option>
+                                <option>10-А</option><option>10-Б</option>
+                                <option>11-А</option><option>11-Б</option>
                             </select>
                         </div>
                     </div>
@@ -302,155 +309,155 @@
                     <div class="schedule-grid" id="schedule-grid"></div>
                     <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
                         <button class="btn-save" onclick="saveSchedule()">
-                            <i class="fa-solid fa-floppy-disk"></i> Р—Р±РµСЂРµРіС‚Рё СЂРѕР·РєР»Р°Рґ
+                            <i class="fa-solid fa-floppy-disk"></i> Зберегти розклад
                         </button>
                         <button class="btn-secondary" onclick="addScheduleLesson()">
-                            <i class="fa-solid fa-plus"></i> Р”РѕРґР°С‚Рё СѓСЂРѕРє
+                            <i class="fa-solid fa-plus"></i> Додати урок
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- в•ђв•ђв•ђ DOCUMENTS в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
+            <!-- ═══ DOCUMENTS ═══════════════════════════════════════════ -->
             <div class="panel" id="panel-documents">
-                <div class="panel-title"><i class="fa-solid fa-file-lines"></i> Р”РѕРєСѓРјРµРЅС‚Рё</div>
+                <div class="panel-title"><i class="fa-solid fa-file-lines"></i> Документи</div>
                 <div class="feedback-msg" id="docs-feedback"></div>
 
                 <div class="form-card">
-                    <h3><i class="fa-solid fa-plus"></i> Р”РѕРґР°С‚Рё РґРѕРєСѓРјРµРЅС‚</h3>
+                    <h3><i class="fa-solid fa-plus"></i> Додати документ</h3>
                     <input type="hidden" id="doc-edit-id">
                     <div class="form-row">
                         <div class="form-group">
-                            <label>РќР°Р·РІР° РґРѕРєСѓРјРµРЅС‚Сѓ *</label>
-                            <input type="text" id="doc-title" placeholder="РќР°РєР°Р· в„–42 РІС–Рґ...">
+                            <label>Назва документу *</label>
+                            <input type="text" id="doc-title" placeholder="Наказ №42 від...">
                         </div>
                         <div class="form-group">
-                            <label>РўРёРї</label>
+                            <label>Тип</label>
                             <select id="doc-type">
-                                <option value="normative">РќРѕСЂРјР°С‚РёРІРЅРёР№ РґРѕРєСѓРјРµРЅС‚</option>
-                                <option value="order">РќР°РєР°Р·</option>
-                                <option value="report">Р—РІС–С‚ РґРёСЂРµРєС‚РѕСЂР°</option>
-                                <option value="other">Р†РЅС€Рµ</option>
+                                <option value="normative">Нормативний документ</option>
+                                <option value="order">Наказ</option>
+                                <option value="report">Звіт директора</option>
+                                <option value="other">Інше</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>РџРѕСЃРёР»Р°РЅРЅСЏ РЅР° С„Р°Р№Р» (Google Drive Р°Р±Рѕ С–РЅС€РёР№ С…РѕСЃС‚РёРЅРі) *</label>
+                        <label>Посилання на файл (Google Drive або інший хостинг) *</label>
                         <input type="url" id="doc-url" placeholder="https://drive.google.com/...">
                     </div>
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
                         <button class="btn-save" onclick="handleDocSave()">
-                            <i class="fa-solid fa-floppy-disk"></i> <span id="doc-btn-label">Р—Р±РµСЂРµРіС‚Рё</span>
+                            <i class="fa-solid fa-floppy-disk"></i> <span id="doc-btn-label">Зберегти</span>
                         </button>
                         <button class="btn-secondary" id="doc-cancel-btn" onclick="cancelDocEdit()" style="display:none;">
-                            <i class="fa-solid fa-xmark"></i> РЎРєР°СЃСѓРІР°С‚Рё
+                            <i class="fa-solid fa-xmark"></i> Скасувати
                         </button>
                     </div>
                 </div>
 
                 <div class="form-card">
-                    <h3><i class="fa-solid fa-list"></i> Р”РѕРєСѓРјРµРЅС‚Рё</h3>
+                    <h3><i class="fa-solid fa-list"></i> Документи</h3>
                     <div style="overflow-x:auto;">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>РќР°Р·РІР°</th>
-                                    <th>РўРёРї</th>
-                                    <th>Р”РѕРґР°РЅРѕ</th>
-                                    <th style="width:120px;">Р”С–С—</th>
+                                    <th>Назва</th>
+                                    <th>Тип</th>
+                                    <th>Додано</th>
+                                    <th style="width:120px;">Дії</th>
                                 </tr>
                             </thead>
                             <tbody id="docs-table-body">
-                                <tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:20px;">Р—Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ...</td></tr>
+                                <tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:20px;">Завантаження...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- в•ђв•ђв•ђ USERS в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
+            <!-- ═══ USERS ════════════════════════════════════════════════ -->
             <div class="panel" id="panel-users">
-                <div class="panel-title"><i class="fa-solid fa-users-gear"></i> РЈРїСЂР°РІР»С–РЅРЅСЏ РєРѕСЂРёСЃС‚СѓРІР°С‡Р°РјРё</div>
+                <div class="panel-title"><i class="fa-solid fa-users-gear"></i> Управління користувачами</div>
                 <div class="feedback-msg" id="users-feedback"></div>
 
                 <div class="form-card">
-                    <h3><i class="fa-solid fa-user-plus"></i> Р”РѕРґР°С‚Рё РєРѕСЂРёСЃС‚СѓРІР°С‡Р°</h3>
+                    <h3><i class="fa-solid fa-user-plus"></i> Додати користувача</h3>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Email РЅРѕРІРѕРіРѕ РєРѕСЂРёСЃС‚СѓРІР°С‡Р°</label>
+                            <label>Email нового користувача</label>
                             <input type="email" id="invite-email" placeholder="teacher@school.com">
                         </div>
                         <div class="form-group">
-                            <label>Р РѕР»СЊ</label>
+                            <label>Роль</label>
                             <select id="invite-role">
-                                <option value="editor">Р РµРґР°РєС‚РѕСЂ вЂ” С‚С–Р»СЊРєРё РЅРѕРІРёРЅРё</option>
-                                <option value="admin">РђРґРјС–РЅС–СЃС‚СЂР°С‚РѕСЂ вЂ” РЅРѕРІРёРЅРё, СЂРѕР·РєР»Р°Рґ, РґРѕРєСѓРјРµРЅС‚Рё</option>
+                                <option value="editor">Редактор — тільки новини</option>
+                                <option value="admin">Адміністратор — новини, розклад, документи</option>
                             </select>
                         </div>
                     </div>
                     <p style="font-size:0.78rem; color:#64748b; margin-bottom:10px;">
-                        <i class="fa-solid fa-circle-info"></i> РџС–СЃР»СЏ РґРѕРґР°РІР°РЅРЅСЏ РЅР°РґС–С€Р»С–С‚СЊ РєРѕСЂРёСЃС‚СѓРІР°С‡Сѓ РїРѕСЃРёР»Р°РЅРЅСЏ РЅР° <code>/admin/login.html</code> вЂ” РІС–РЅ СЂРµС”СЃС‚СЂСѓС”С‚СЊСЃСЏ СЃР°Рј.
+                        <i class="fa-solid fa-circle-info"></i> Після додавання надішліть користувачу посилання на <code>/admin/login.html</code> — він реєструється сам.
                     </p>
                     <button class="btn-save" onclick="handleInviteUser()">
-                        <i class="fa-solid fa-paper-plane"></i> Р”РѕРґР°С‚Рё РґРѕ СЃРёСЃС‚РµРјРё
+                        <i class="fa-solid fa-paper-plane"></i> Додати до системи
                     </button>
                 </div>
 
                 <div class="form-card">
-                    <h3><i class="fa-solid fa-list"></i> РџРѕС‚РѕС‡РЅС– РєРѕСЂРёСЃС‚СѓРІР°С‡С–</h3>
+                    <h3><i class="fa-solid fa-list"></i> Поточні користувачі</h3>
                     <div style="overflow-x:auto;">
                         <table class="data-table">
                             <thead>
                                 <tr>
                                     <th>Email</th>
-                                    <th>Р РѕР»СЊ</th>
-                                    <th>Р”РѕРґР°РЅРёР№</th>
-                                    <th style="width:180px;">Р”С–С—</th>
+                                    <th>Роль</th>
+                                    <th>Доданий</th>
+                                    <th style="width:180px;">Дії</th>
                                 </tr>
                             </thead>
                             <tbody id="users-table-body">
-                                <tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:20px;">Р—Р°РІР°РЅС‚Р°Р¶РµРЅРЅСЏ...</td></tr>
+                                <tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:20px;">Завантаження...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- в•ђв•ђв•ђ SETTINGS в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
+            <!-- ═══ SETTINGS ══════════════════════════════════════════════ -->
             <div class="panel" id="panel-settings">
-                <div class="panel-title"><i class="fa-solid fa-gear"></i> РќР°Р»Р°С€С‚СѓРІР°РЅРЅСЏ СЃР°Р№С‚Сѓ</div>
+                <div class="panel-title"><i class="fa-solid fa-gear"></i> Налаштування сайту</div>
                 <div class="feedback-msg" id="settings-feedback"></div>
 
                 <div class="settings-tabs">
-                    <div class="settings-tab active" onclick="switchSettingsTab('contacts')">РљРѕРЅС‚Р°РєС‚Рё</div>
-                    <div class="settings-tab" onclick="switchSettingsTab('general')">Р—Р°РіР°Р»СЊРЅРµ</div>
-                    <div class="settings-tab" onclick="switchSettingsTab('security')">Р‘РµР·РїРµРєР°</div>
+                    <div class="settings-tab active" onclick="switchSettingsTab('contacts')">Контакти</div>
+                    <div class="settings-tab" onclick="switchSettingsTab('general')">Загальне</div>
+                    <div class="settings-tab" onclick="switchSettingsTab('security')">Безпека</div>
                 </div>
 
                 <!-- Contacts tab -->
                 <div id="settings-contacts">
                     <div class="form-card">
-                        <h3><i class="fa-solid fa-phone"></i> РљРѕРЅС‚Р°РєС‚РЅР° С–РЅС„РѕСЂРјР°С†С–СЏ</h3>
+                        <h3><i class="fa-solid fa-phone"></i> Контактна інформація</h3>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>РўРµР»РµС„РѕРЅ</label>
+                                <label>Телефон</label>
                                 <input type="text" id="set-phone" placeholder="(05355) 31-624">
                             </div>
                             <div class="form-group">
-                                <label>Email Р·Р°РєР»Р°РґСѓ</label>
+                                <label>Email закладу</label>
                                 <input type="email" id="set-email" placeholder="sorint@ukr.net">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>РђРґСЂРµСЃР°</label>
-                            <input type="text" id="set-address" placeholder="РІСѓР». РњРёСЂРіРѕСЂРѕРґСЃСЊРєР°, 40, СЃ. Р’РµР»РёРєС– РЎРѕСЂРѕС‡РёРЅС†С–, 37645">
+                            <label>Адреса</label>
+                            <input type="text" id="set-address" placeholder="вул. Миргородська, 40, с. Великі Сорочинці, 37645">
                         </div>
                         <div class="form-group">
-                            <label>Р РµР¶РёРј СЂРѕР±РѕС‚Рё</label>
-                            <input type="text" id="set-hours" placeholder="РџРЅвЂ“РџС‚: 8:00вЂ“17:00">
+                            <label>Режим роботи</label>
+                            <input type="text" id="set-hours" placeholder="Пн–Пт: 8:00–17:00">
                         </div>
                         <button class="btn-save" onclick="saveSettings('contacts')">
-                            <i class="fa-solid fa-floppy-disk"></i> Р—Р±РµСЂРµРіС‚Рё Р·РјС–РЅРё
+                            <i class="fa-solid fa-floppy-disk"></i> Зберегти зміни
                         </button>
                     </div>
                 </div>
@@ -458,25 +465,25 @@
                 <!-- General tab -->
                 <div id="settings-general" style="display:none;">
                     <div class="form-card">
-                        <h3><i class="fa-solid fa-school"></i> Р†РЅС„РѕСЂРјР°С†С–СЏ РїСЂРѕ Р·Р°РєР»Р°Рґ</h3>
+                        <h3><i class="fa-solid fa-school"></i> Інформація про заклад</h3>
                         <div class="form-group">
-                            <label>РџРѕРІРЅР° РЅР°Р·РІР° Р·Р°РєР»Р°РґСѓ</label>
-                            <input type="text" id="set-school-name" placeholder="Р’РµР»РёРєРѕСЃРѕСЂРѕС‡РёРЅСЃСЊРєРёР№ Р»С–С†РµР№">
+                            <label>Повна назва закладу</label>
+                            <input type="text" id="set-school-name" placeholder="Великосорочинський ліцей">
                         </div>
                         <div class="form-group">
-                            <label>Р”РёСЂРµРєС‚РѕСЂ</label>
-                            <input type="text" id="set-director" placeholder="РџР†Р‘ РґРёСЂРµРєС‚РѕСЂР°">
+                            <label>Директор</label>
+                            <input type="text" id="set-director" placeholder="ПІБ директора">
                         </div>
                         <div class="form-group">
-                            <label>Р С–Рє Р·Р°СЃРЅСѓРІР°РЅРЅСЏ</label>
+                            <label>Рік заснування</label>
                             <input type="number" id="set-founded" placeholder="1945">
                         </div>
                         <div class="form-group">
-                            <label>РћРїРёСЃ Р·Р°РєР»Р°РґСѓ (РјРµС‚Р°-РѕРїРёСЃ РґР»СЏ Google)</label>
-                            <textarea id="set-description" rows="3" placeholder="РљРѕСЂРѕС‚РєРёР№ РѕРїРёСЃ Р»С–С†РµСЋ РґР»СЏ РїРѕС€СѓРєРѕРІРёС… СЃРёСЃС‚РµРј..."></textarea>
+                            <label>Опис закладу (мета-опис для Google)</label>
+                            <textarea id="set-description" rows="3" placeholder="Короткий опис ліцею для пошукових систем..."></textarea>
                         </div>
                         <button class="btn-save" onclick="saveSettings('general')">
-                            <i class="fa-solid fa-floppy-disk"></i> Р—Р±РµСЂРµРіС‚Рё Р·РјС–РЅРё
+                            <i class="fa-solid fa-floppy-disk"></i> Зберегти зміни
                         </button>
                     </div>
                 </div>
@@ -484,17 +491,17 @@
                 <!-- Security tab -->
                 <div id="settings-security" style="display:none;">
                     <div class="form-card">
-                        <h3><i class="fa-solid fa-key"></i> Р—РјС–РЅР° РїР°СЂРѕР»СЏ</h3>
+                        <h3><i class="fa-solid fa-key"></i> Зміна пароля</h3>
                         <div class="form-group">
-                            <label>РќРѕРІРёР№ РїР°СЂРѕР»СЊ</label>
-                            <input type="password" id="new-password" placeholder="РњС–РЅС–РјСѓРј 6 СЃРёРјРІРѕР»С–РІ">
+                            <label>Новий пароль</label>
+                            <input type="password" id="new-password" placeholder="Мінімум 6 символів">
                         </div>
                         <div class="form-group">
-                            <label>РџС–РґС‚РІРµСЂРґРёС‚Рё РЅРѕРІРёР№ РїР°СЂРѕР»СЊ</label>
-                            <input type="password" id="confirm-password" placeholder="РџРѕРІС‚РѕСЂС–С‚СЊ РїР°СЂРѕР»СЊ">
+                            <label>Підтвердити новий пароль</label>
+                            <input type="password" id="confirm-password" placeholder="Повторіть пароль">
                         </div>
                         <button class="btn-save" onclick="changePassword()">
-                            <i class="fa-solid fa-lock"></i> Р—РјС–РЅРёС‚Рё РїР°СЂРѕР»СЊ
+                            <i class="fa-solid fa-lock"></i> Змінити пароль
                         </button>
                     </div>
                 </div>
@@ -503,24 +510,24 @@
         </div><!-- /content-area -->
     </div><!-- /main-area -->
 
-    <!-- в•ђв•ђв•ђ MODAL: Edit Role в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ -->
+    <!-- ═══ MODAL: Edit Role ══════════════════════════════════════════════ -->
     <div class="modal-overlay" id="modal-role">
         <div class="modal">
-            <h3><i class="fa-solid fa-user-pen"></i> Р—РјС–РЅРёС‚Рё СЂРѕР»СЊ РєРѕСЂРёСЃС‚СѓРІР°С‡Р°</h3>
+            <h3><i class="fa-solid fa-user-pen"></i> Змінити роль користувача</h3>
             <div class="form-group">
                 <label>Email</label>
                 <input type="text" id="modal-role-email" readonly style="background:#f1f5f9;">
             </div>
             <div class="form-group">
-                <label>РќРѕРІР° СЂРѕР»СЊ</label>
+                <label>Нова роль</label>
                 <select id="modal-role-select">
-                    <option value="editor">Р РµРґР°РєС‚РѕСЂ вЂ” С‚С–Р»СЊРєРё РЅРѕРІРёРЅРё</option>
-                    <option value="admin">РђРґРјС–РЅС–СЃС‚СЂР°С‚РѕСЂ вЂ” РЅРѕРІРёРЅРё, СЂРѕР·РєР»Р°Рґ, РґРѕРєСѓРјРµРЅС‚Рё</option>
+                    <option value="editor">Редактор — тільки новини</option>
+                    <option value="admin">Адміністратор — новини, розклад, документи</option>
                 </select>
             </div>
             <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeModal('modal-role')">РЎРєР°СЃСѓРІР°С‚Рё</button>
-                <button class="btn-save" onclick="saveUserRole()"><i class="fa-solid fa-floppy-disk"></i> Р—Р±РµСЂРµРіС‚Рё</button>
+                <button class="btn-cancel" onclick="closeModal('modal-role')">Скасувати</button>
+                <button class="btn-save" onclick="saveUserRole()"><i class="fa-solid fa-floppy-disk"></i> Зберегти</button>
             </div>
         </div>
     </div>

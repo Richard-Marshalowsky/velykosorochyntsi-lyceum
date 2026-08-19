@@ -83,14 +83,17 @@ async function init() {
 
 async function loadStats() {
     try {
-        const [newsRes, usersRes, docsRes] = await Promise.allSettled([
+        const [newsRes, usersRes, docsRes, trustRes] = await Promise.allSettled([
             db.from('news').select('id', { count: 'exact', head: true }),
             db.from('admin_users').select('email', { count: 'exact', head: true }),
-            db.from('documents').select('id', { count: 'exact', head: true })
+            db.from('documents').select('id', { count: 'exact', head: true }),
+            db.from('trust_messages').select('id', { count: 'exact', head: true })
         ]);
         document.getElementById('stat-news').textContent = newsRes.status === 'fulfilled' ? (newsRes.value.count ?? 0) : 0;
         document.getElementById('stat-users').textContent = usersRes.status === 'fulfilled' ? (usersRes.value.count ?? 0) : 0;
         document.getElementById('stat-docs').textContent = docsRes.status === 'fulfilled' ? (docsRes.value.count ?? 0) : 0;
+        const trustStatEl = document.getElementById('stat-trust');
+        if (trustStatEl) trustStatEl.textContent = trustRes.status === 'fulfilled' ? (trustRes.value.count ?? 0) : 0;
     } catch (e) {
         console.error('Error loading stats:', e);
     }
@@ -110,6 +113,7 @@ function showPanel(name) {
         news: '<i class="fa-solid fa-newspaper"></i> Новини',
         schedule: '<i class="fa-solid fa-calendar-check"></i> Розклад',
         documents: '<i class="fa-solid fa-file-lines"></i> Документи',
+        trust: '<i class="fa-solid fa-envelope-open-text"></i> Скринька довіри',
         users: '<i class="fa-solid fa-users-gear"></i> Користувачі',
         settings: '<i class="fa-solid fa-gear"></i> Налаштування',
     };
@@ -117,6 +121,7 @@ function showPanel(name) {
     if (name === 'news') loadNewsList();
     if (name === 'documents') loadDocsList();
     if (name === 'settings') loadSettings();
+    if (name === 'trust') loadTrustMessages();
 }
 
 // ─── FEEDBACK ─────────────────────────────────────────────────────────
