@@ -138,13 +138,23 @@ function initTrustForm() {
     const feedback = document.getElementById('trust-feedback');
     const submitBtn = form.querySelector('button[type="submit"]');
 
+    // Dynamic Math Captcha Generator
+    const qEl = document.getElementById('trust-captcha-question');
+    let expectedSum = 0;
+    const generateCaptcha = () => {
+        const n1 = Math.floor(Math.random() * 12) + 2;
+        const n2 = Math.floor(Math.random() * 10) + 1;
+        expectedSum = n1 + n2;
+        if (qEl) qEl.textContent = `${n1} + ${n2}`;
+    };
+    generateCaptcha();
+
     form.addEventListener('submit', async event => {
         event.preventDefault();
 
         // 1. Anti-Spam: Honeypot check
         const hp = document.getElementById('trust-hp')?.value;
         if (hp) {
-            // Fake success for bots
             if (feedback) {
                 feedback.style.color = '#166534';
                 feedback.textContent = 'Ваше звернення успішно надіслано!';
@@ -153,12 +163,13 @@ function initTrustForm() {
             return;
         }
 
-        // 2. Anti-Spam: Math CAPTCHA verification
-        const captchaVal = document.getElementById('trust-captcha')?.value.trim();
-        if (captchaVal !== '7') {
+        // 2. Anti-Spam: Dynamic Math CAPTCHA verification
+        const captchaVal = parseInt(document.getElementById('trust-captcha')?.value.trim() || '', 10);
+        if (isNaN(captchaVal) || captchaVal !== expectedSum) {
+            generateCaptcha();
             if (feedback) {
                 feedback.style.color = '#dc2626';
-                feedback.textContent = 'Невірне значення перевірочного завдання (4 + 3 = 7). Спробуйте ще раз.';
+                feedback.textContent = '❌ Невірна відповідь на перевірочне завдання. Завдання оновлено, спробуйте ще раз.';
             }
             return;
         }
@@ -221,6 +232,7 @@ function initTrustForm() {
                 feedback.textContent = '✅ Ваше звернення успішно надіслано адміністрації! Дякуємо.';
             }
             form.reset();
+            generateCaptcha();
         } catch (err) {
             console.error('[TrustForm Error]', err);
             if (feedback) {
