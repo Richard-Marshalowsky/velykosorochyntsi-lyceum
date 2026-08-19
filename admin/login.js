@@ -42,17 +42,33 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Вхід...';
             errorEl.classList.remove('show');
 
-            const { data, error } = await db.auth.signInWithPassword({ email, password });
+            // Отримуємо токен капчі Turnstile
+            const captchaInput = document.querySelector('[name="cf-turnstile-response"]');
+            const captchaToken = captchaInput ? captchaInput.value : (window.turnstile ? window.turnstile.getResponse() : undefined);
+
+            const authParams = { email, password };
+            if (captchaToken) {
+                authParams.options = { captchaToken };
+            }
+
+            const { data, error } = await db.auth.signInWithPassword(authParams);
 
             if (error) {
+                // Скидаємо капчу для повторної спроби
+                if (window.turnstile) {
+                    try { window.turnstile.reset(); } catch (err) {}
+                }
+
                 loginFailures++;
                 const delay = getBackoffDelay(loginFailures);
                 lockedUntil = Date.now() + delay;
                 localStorage.setItem('login_failures', loginFailures.toString());
                 localStorage.setItem('login_locked_until', lockedUntil.toString());
 
-                let msg = 'Невірний email або пароль. Перевірте дані та спробуйте ще раз.';
-                if (loginFailures >= 3 && delay > 0) {
+                let msg = 'Невірний email, пароль або помилка перевірки безпеки.';
+                if (error.message && error.message.toLowerCase().includes('captcha')) {
+                    msg = 'Будь ласка, пройдіть перевірку безпеки (капчу) та спробуйте знову.';
+                } else if (loginFailures >= 3 && delay > 0) {
                     msg += ` (Спроба ${loginFailures}. Наступна спроба через ${delay / 1000} сек.)`;
                 }
                 errorEl.textContent = msg;
