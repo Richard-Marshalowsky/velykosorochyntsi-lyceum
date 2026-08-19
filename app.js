@@ -152,7 +152,17 @@ function initTrustForm() {
             return;
         }
 
-        // 2. Anti-Spam: Rate limiting (60 seconds cooldown per browser)
+        // 2. Anti-Spam: Math CAPTCHA verification
+        const captchaVal = document.getElementById('trust-captcha')?.value.trim();
+        if (captchaVal !== '7') {
+            if (feedback) {
+                feedback.style.color = '#dc2626';
+                feedback.textContent = 'Невірне значення перевірочного завдання (4 + 3 = 7). Спробуйте ще раз.';
+            }
+            return;
+        }
+
+        // 3. Anti-Spam: Rate limiting (60 seconds cooldown per browser)
         const lastSent = localStorage.getItem('trust_form_last_sent');
         const now = Date.now();
         if (lastSent && (now - parseInt(lastSent, 10) < 60000)) {

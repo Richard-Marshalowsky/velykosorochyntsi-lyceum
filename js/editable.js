@@ -167,7 +167,14 @@ function setupInlineEditor(db, page, fields, email, session) {
 
 
 function sanitizeEditableHtml(html) {
-  const allowedTags = new Set(['A', 'B', 'BR', 'EM', 'I', 'SPAN', 'STRONG', 'U']);
+  if (window.DOMPurify) {
+    return window.DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ['a', 'b', 'br', 'em', 'i', 'span', 'strong', 'u', 'p'],
+      ALLOWED_ATTR: ['href', 'title', 'target', 'rel']
+    });
+  }
+
+  const allowedTags = new Set(['A', 'B', 'BR', 'EM', 'I', 'SPAN', 'STRONG', 'U', 'P']);
   const template = document.createElement('template');
   template.innerHTML = html;
 
