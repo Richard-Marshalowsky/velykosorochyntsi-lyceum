@@ -1,8 +1,8 @@
 -- =========================================================================
 -- VELYKOSOROCHYNTSI LYCEUM - SECURE SUPABASE DATABASE SCHEMA & RLS SETUP
 -- =========================================================================
--- Run this in Supabase: SQL Editor -> New query -> Paste & Run.
--- Note: Replace YOUR_TURNSTILE_SECRET_KEY with your actual Cloudflare secret key directly in SQL editor.
+-- Instructions: Paste this in Supabase SQL Editor, replace YOUR_TURNSTILE_SECRET_KEY
+-- with your actual Cloudflare secret key, and click Run.
 
 create extension if not exists http with schema extensions;
 
@@ -77,20 +77,20 @@ create table if not exists public.comments (
 );
 alter table public.comments enable row level security;
 
--- 8. RATE LIMIT TABLES
+-- 8. RATE LIMIT TABLES (Strictly Private)
 create table if not exists public.trust_rate_limits (
   ip_address text primary key,
   last_submitted_at timestamptz not null default now()
 );
 alter table public.trust_rate_limits enable row level security;
-revoke all on public.trust_rate_limits from anon, authenticated;
+revoke all on public.trust_rate_limits from public, anon, authenticated;
 
 create table if not exists public.comment_rate_limits (
   ip_address text primary key,
   last_submitted_at timestamptz not null default now()
 );
 alter table public.comment_rate_limits enable row level security;
-revoke all on public.comment_rate_limits from anon, authenticated;
+revoke all on public.comment_rate_limits from public, anon, authenticated;
 
 
 -- =========================================================================
@@ -154,14 +154,14 @@ create policy "public reads schedule" on public.schedule for select using (true)
 drop policy if exists "admins manage schedule" on public.schedule;
 create policy "admins manage schedule" on public.schedule for all to authenticated using (public.is_site_admin()) with check (public.is_site_admin());
 
--- Policies: trust_messages
+-- Policies: trust_messages (Only readable/deletable by admins)
 drop policy if exists "admins read trust messages" on public.trust_messages;
 create policy "admins read trust messages" on public.trust_messages for select to authenticated using (public.is_site_admin());
 
 drop policy if exists "admins delete trust messages" on public.trust_messages;
 create policy "admins delete trust messages" on public.trust_messages for delete to authenticated using (public.is_site_admin());
 
-revoke insert, select, update, delete on public.trust_messages from anon;
+revoke insert, select, update, delete on public.trust_messages from public, anon;
 
 -- Policies: comments
 drop policy if exists "public read comments" on public.comments;
@@ -176,7 +176,7 @@ insert into public.admin_users(email, role) values
  ('dov@vs.pl.ukr.education','admin')
 on conflict (email) do update set role = excluded.role;
 
--- Grant base table permissions
+-- Grant minimal necessary table permissions
 grant all on public.admin_users to authenticated;
 grant select on public.admin_users to anon;
 
@@ -199,7 +199,7 @@ grant select, delete on public.trust_messages to authenticated;
 
 
 -- =========================================================================
--- SECURE RPC: SUBMIT TRUST MESSAGE (Fail-Closed, Atomic Rate Limit, Length Validated)
+-- SECURE RPC: SUBMIT TRUST MESSAGE (Strict Fail-Closed, Nonce/IP Protected)
 -- =========================================================================
 drop function if exists public.submit_trust_message_secure(text, text, text, text);
 drop function if exists public.submit_trust_message_secure(text, text, text, text, text);
@@ -215,7 +215,7 @@ declare
   v_headers jsonb;
   v_client_ip text;
   v_cooldown_seconds int := 60;
-  -- Set your real secret key here directly in Supabase SQL editor (do not commit to public repos)
+  -- Set your real secret key here directly in Supabase SQL editor (never commit real secret to git)
   v_turnstile_secret text := 'YOUR_TURNSTILE_SECRET_KEY';
   v_turnstile_ok boolean := false;
   v_http_response extensions.http_response;
@@ -238,39 +238,40 @@ begin
     raise exception 'Ім’я занадто довге (максимум 100 символів)';
   end if;
 
-  -- 2. Turnstile Captcha verification (Fail-Closed)
+  -- 2. Turnstile Captcha verification (Strict Fail-Closed: no bypass if key is missing)
   if p_turnstile_token is null or trim(p_turnstile_token) = '' then
     raise exception 'Пройдіть перевірку безпеки (капчу)';
   end if;
 
-  if v_turnstile_secret <> 'YOUR_TURNSTILE_SECRET_KEY' and v_turnstile_secret <> '' then
-    begin
-      select * into v_http_response from extensions.http_post(
-        'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-        json_build_object(
-          'secret', v_turnstile_secret,
-          'response', trim(p_turnstile_token)
-        )::text,
-        'application/json'
-      );
-      v_response_body := v_http_response.content::jsonb;
-      v_turnstile_ok := coalesce((v_response_body->>'success')::boolean, false);
-    exception when others then
-      -- Fail-closed
-      raise exception 'Помилка з’єднання з сервісом перевірки безпеки. Спробуйте пізніше.';
-    end;
-
-    if not v_turnstile_ok then
-      raise exception 'Перевірка безпеки не пройдена. Оновіть сторінку.';
-    end if;
+  if v_turnstile_secret is null or v_turnstile_secret = '' or v_turnstile_secret = 'YOUR_TURNSTILE_SECRET_KEY' then
+    raise exception 'Секретний ключ капчі не налаштований на сервері';
   end if;
 
-  -- 3. Extract real client IP
+  begin
+    select * into v_http_response from extensions.http_post(
+      'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+      json_build_object(
+        'secret', v_turnstile_secret,
+        'response', trim(p_turnstile_token)
+      )::text,
+      'application/json'
+    );
+    v_response_body := v_http_response.content::jsonb;
+    v_turnstile_ok := coalesce((v_response_body->>'success')::boolean, false);
+  exception when others then
+    -- Fail-closed
+    raise exception 'Помилка з’єднання з сервісом перевірки безпеки. Спробуйте пізніше.';
+  end;
+
+  if not v_turnstile_ok then
+    raise exception 'Перевірка безпеки не пройдена. Оновіть сторінку.';
+  end if;
+
+  -- 3. Extract real client IP from Cloudflare header (spoof-proof)
   begin
     v_headers := current_setting('request.headers', true)::jsonb;
     v_client_ip := coalesce(
       v_headers->>'cf-connecting-ip',
-      v_headers->>'x-forwarded-for',
       'unknown'
     );
     if v_client_ip like '%,%' then
@@ -306,12 +307,16 @@ begin
 end;
 $$;
 
+-- Revoke all permissions from public, grant explicitly only to anon and authenticated
+revoke all on function public.submit_trust_message_secure(text, text, text, text, text) from public;
 grant execute on function public.submit_trust_message_secure(text, text, text, text, text) to anon, authenticated;
 
 
 -- =========================================================================
--- SECURE RPC: SUBMIT COMMENT (Fail-Closed, Atomic Rate Limit, Length Validated)
+-- SECURE RPC: SUBMIT COMMENT (Strict Fail-Closed, Nonce/IP Protected)
 -- =========================================================================
+drop function if exists public.submit_comment_secure(text, text, text, text);
+
 create or replace function public.submit_comment_secure(
   p_page text,
   p_author_name text,
@@ -322,7 +327,7 @@ declare
   v_headers jsonb;
   v_client_ip text;
   v_cooldown_seconds int := 20;
-  -- Set your real secret key here directly in Supabase SQL editor (do not commit to public repos)
+  -- Set your real secret key here directly in Supabase SQL editor (never commit real secret to git)
   v_turnstile_secret text := 'YOUR_TURNSTILE_SECRET_KEY';
   v_turnstile_ok boolean := false;
   v_http_response extensions.http_response;
@@ -340,39 +345,40 @@ begin
     raise exception 'Ім’я занадто довге (максимум 100 символів)';
   end if;
 
-  -- 2. Turnstile Captcha verification (Fail-Closed)
+  -- 2. Turnstile Captcha verification (Strict Fail-Closed)
   if p_turnstile_token is null or trim(p_turnstile_token) = '' then
     raise exception 'Пройдіть перевірку безпеки (капчу)';
   end if;
 
-  if v_turnstile_secret <> 'YOUR_TURNSTILE_SECRET_KEY' and v_turnstile_secret <> '' then
-    begin
-      select * into v_http_response from extensions.http_post(
-        'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-        json_build_object(
-          'secret', v_turnstile_secret,
-          'response', trim(p_turnstile_token)
-        )::text,
-        'application/json'
-      );
-      v_response_body := v_http_response.content::jsonb;
-      v_turnstile_ok := coalesce((v_response_body->>'success')::boolean, false);
-    exception when others then
-      -- Fail-closed
-      raise exception 'Помилка з’єднання з сервісом перевірки безпеки. Спробуйте пізніше.';
-    end;
-
-    if not v_turnstile_ok then
-      raise exception 'Перевірка безпеки не пройдена. Оновіть сторінку.';
-    end if;
+  if v_turnstile_secret is null or v_turnstile_secret = '' or v_turnstile_secret = 'YOUR_TURNSTILE_SECRET_KEY' then
+    raise exception 'Секретний ключ капчі не налаштований на сервері';
   end if;
 
-  -- 3. Extract real client IP
+  begin
+    select * into v_http_response from extensions.http_post(
+      'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+      json_build_object(
+        'secret', v_turnstile_secret,
+        'response', trim(p_turnstile_token)
+      )::text,
+      'application/json'
+    );
+    v_response_body := v_http_response.content::jsonb;
+    v_turnstile_ok := coalesce((v_response_body->>'success')::boolean, false);
+  exception when others then
+    -- Fail-closed
+    raise exception 'Помилка з’єднання з сервісом перевірки безпеки. Спробуйте пізніше.';
+  end;
+
+  if not v_turnstile_ok then
+    raise exception 'Перевірка безпеки не пройдена. Оновіть сторінку.';
+  end if;
+
+  -- 3. Extract real client IP (Cloudflare cf-connecting-ip)
   begin
     v_headers := current_setting('request.headers', true)::jsonb;
     v_client_ip := coalesce(
       v_headers->>'cf-connecting-ip',
-      v_headers->>'x-forwarded-for',
       'unknown'
     );
     if v_client_ip like '%,%' then
@@ -414,5 +420,6 @@ begin
 end;
 $$;
 
+-- Revoke all permissions from public, grant explicitly only to anon and authenticated
+revoke all on function public.submit_comment_secure(text, text, text, text) from public;
 grant execute on function public.submit_comment_secure(text, text, text, text) to anon, authenticated;
-grant usage on all sequences in schema public to authenticated, anon;
