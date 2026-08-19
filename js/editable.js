@@ -308,20 +308,33 @@ async function initCommentsSection(db, page, session) {
   if (form) {
     form.onsubmit = async (e) => {
       e.preventDefault();
+
+      // Comment Rate Limiting (max 1 comment per 20 seconds)
+      const lastCommentTime = localStorage.getItem('last_comment_time');
+      const now = Date.now();
+      if (lastCommentTime && (now - parseInt(lastCommentTime, 10) < 20000)) {
+        const waitSec = Math.ceil((20000 - (now - parseInt(lastCommentTime, 10))) / 1000);
+        alert(`Зачекайте ${waitSec} сек. перед додаванням наступного коментаря.`);
+        return;
+      }
+
       const input = document.getElementById('comment-text');
       const text = input.value.trim();
       if (!text) return;
 
+      const cleanContent = sanitizeEditableHtml(text);
+
       const { error } = await db.from('comments').insert({
         page,
         author_email: userEmail,
-        content: text,
+        content: cleanContent,
         created_at: new Date().toISOString()
       });
 
       if (error) {
         alert('Помилка при додаванні коментаря: ' + error.message);
       } else {
+        localStorage.setItem('last_comment_time', Date.now().toString());
         input.value = '';
         loadComments();
       }

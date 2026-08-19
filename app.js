@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initAccessibilityMode();
     initSearch();
     initTrustForm();
+    initCookieBanner();
 });
 
 // 1. MOBILE MENU TOGGLE
@@ -162,7 +163,17 @@ function initTrustForm() {
             return;
         }
 
-        // 3. Anti-Spam: Rate limiting (60 seconds cooldown per browser)
+        // 3. Privacy Consent check
+        const consent = document.getElementById('trust-consent')?.checked;
+        if (!consent) {
+            if (feedback) {
+                feedback.style.color = '#dc2626';
+                feedback.textContent = 'Будь ласка, підтвердіть згоду на обробку персональних даних.';
+            }
+            return;
+        }
+
+        // 4. Anti-Spam: Rate limiting (60 seconds cooldown per browser)
         const lastSent = localStorage.getItem('trust_form_last_sent');
         const now = Date.now();
         if (lastSent && (now - parseInt(lastSent, 10) < 60000)) {
@@ -254,5 +265,57 @@ function initSearch() {
         }
 
         feedback.textContent = 'Нічого не знайдено. Спробуйте: вступ, розклад, контакти або документи.';
+    });
+}
+
+// 8. COOKIE / LOCALSTORAGE PRIVACY BANNER
+function initCookieBanner() {
+    if (localStorage.getItem('cookie_consent_accepted')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'cookie-consent-banner';
+    banner.style.cssText = `
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #0f172a;
+        color: #f8fafc;
+        padding: 14px 20px;
+        font-size: 0.85rem;
+        z-index: 9999;
+        box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        flex-wrap: wrap;
+        border-top: 2px solid #2563eb;
+    `;
+
+    banner.innerHTML = `
+        <div style="flex: 1; min-width: 250px;">
+            <i class="fa-solid fa-cookie-bite" style="color: #f59e0b; margin-right: 6px;"></i>
+            Цей сайт використовує технічні файли cookie та localStorage для забезпечення роботи форм, збереження налаштувань доступності та захисту від спаму.
+            <a href="privacy.html" style="color: #60a5fa; text-decoration: underline; margin-left: 4px;">Політика конфіденційності</a>
+        </div>
+        <button id="accept-cookie-btn" style="
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+            white-space: nowrap;
+        ">Зрозуміло</button>
+    `;
+
+    document.body.appendChild(banner);
+
+    document.getElementById('accept-cookie-btn')?.addEventListener('click', () => {
+        localStorage.setItem('cookie_consent_accepted', 'true');
+        banner.remove();
     });
 }
