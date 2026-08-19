@@ -215,7 +215,7 @@ function initTrustForm() {
 
             const db = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
             
-            // Call server-side IP rate limited RPC function first
+            // Call server-side IP rate limited RPC function (Strict mode, no bypass fallback)
             let { data: rpcData, error: rpcError } = await db.rpc('submit_trust_message_secure', {
                 p_name: name,
                 p_status: status,
@@ -224,20 +224,8 @@ function initTrustForm() {
             });
 
             if (rpcError) {
-                // If blocked by PostgreSQL Server-Side IP rate limit
-                if (rpcError.message && rpcError.message.includes('Зачекайте')) {
-                    throw new Error(rpcError.message);
-                }
-                // Fallback to direct insert if RPC SQL script has not been run yet
-                const { error: insertError } = await db.from('trust_messages').insert([{
-                    name,
-                    status,
-                    subject,
-                    message
-                }]);
-                if (insertError) {
-                    throw new Error('Помилка збереження: ' + (insertError.message || insertError.code));
-                }
+                console.error('[TrustForm RPC Error]', rpcError);
+                throw new Error(rpcError.message || 'Помилка виконання запиту');
             }
 
             localStorage.setItem('trust_form_last_sent', Date.now().toString());

@@ -90,14 +90,14 @@ create table if not exists public.trust_messages (
 
 alter table public.trust_messages enable row level security;
 
+-- STRICT ACCESS CONTROL: anon CANNOT insert directly into trust_messages, only via submit_trust_message_secure RPC!
 drop policy if exists "public insert trust messages" on public.trust_messages;
-create policy "public insert trust messages" on public.trust_messages for insert to anon, authenticated with check (true);
 
 drop policy if exists "admins read trust messages" on public.trust_messages;
 create policy "admins read trust messages" on public.trust_messages for select to authenticated using (public.is_site_admin());
 
-GRANT ALL ON public.trust_messages TO authenticated;
-GRANT ALL ON public.trust_messages TO anon;
+grant select, update, delete on public.trust_messages to authenticated;
+revoke insert, select, update, delete on public.trust_messages from anon;
 
 -- SERVER-SIDE IP RATE-LIMITING TABLE & RPC FUNCTION FOR TRUST MESSAGES
 create table if not exists public.trust_rate_limits (
@@ -106,7 +106,10 @@ create table if not exists public.trust_rate_limits (
 );
 
 alter table public.trust_rate_limits enable row level security;
-grant select, insert, update on public.trust_rate_limits to anon, authenticated;
+
+-- PRIVACY Hardening: REVOKE SELECT from anon & authenticated to prevent IP address leaks!
+-- The SECURITY DEFINER RPC function bypasses RLS safely internally, keeping IPs completely private.
+revoke all on public.trust_rate_limits from anon, authenticated;
 
 create or replace function public.submit_trust_message_secure(
   p_name text,
