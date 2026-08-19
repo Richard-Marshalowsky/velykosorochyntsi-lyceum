@@ -218,52 +218,71 @@ async function initCommentsSection(db, page, session) {
   section.style.cssText = 'padding:20px; margin-top:24px; border-top:3px solid #1a365d;';
 
   const userEmail = session ? session.user.email.toLowerCase() : null;
+  const isAuth = !!session;
+
+  // Make sure Turnstile API script is loaded
+  if (!window.turnstile && !document.querySelector('script[src*="turnstile"]')) {
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    s.async = true;
+    s.defer = true;
+    document.head.appendChild(s);
+  }
 
   section.innerHTML = `
-    <div class="block-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="block-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
       <h2><i class="fa-solid fa-comments"></i> Обговорення та відгуки</h2>
     </div>
-    
-    ${session ? `
-      <form id="comment-form" style="margin-bottom:20px; background:#f8fafc; padding:14px; border-radius:6px; border:1px solid #e2e8f0;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px; font-weight:600; font-size:0.85rem; color:#1e293b;">
+
+    <form id="comment-form" style="margin-bottom:24px; background:#f8fafc; padding:16px; border-radius:6px; border:1px solid #e2e8f0;">
+      ${isAuth ? `
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; font-weight:600; font-size:0.85rem; color:#1e293b;">
           <img src="https://www.gravatar.com/avatar/${md5Hex(userEmail)}?d=mp&s=60" style="width:24px;height:24px;border-radius:50%;">
-          <span>Ваш коментар (${userEmail}):</span>
+          <span>Ви авторизовані як: <strong>${userEmail}</strong></span>
         </div>
-        <textarea id="comment-text" rows="3" required placeholder="Напишіть ваш коментар чи запитання..." style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.88rem; outline:none; font-family:inherit;"></textarea>
-        <button type="submit" style="margin-top:8px; background:#1a365d; color:#fff; border:0; padding:8px 16px; border-radius:4px; font-weight:700; cursor:pointer; font-size:0.85rem;">
-          <i class="fa-solid fa-paper-plane"></i> Надіслати коментар
-        </button>
-      </form>
-    ` : `
-      <div style="background:#eff6ff; border:1px solid #bfdbfe; color:#1e3a5f; padding:12px; border-radius:6px; margin-bottom:20px; font-size:0.88rem;">
-        <i class="fa-solid fa-lock"></i> Щоб залишити коментар, будь ласка, <a href="admin/login.html" style="font-weight:700; color:#1d4ed8;">увійдіть в акаунт</a>.
+      ` : `
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:0.82rem; font-weight:600; color:#334155; margin-bottom:4px;">Ваше ім'я або статус (необов'язково):</label>
+          <input type="text" id="comment-author-name" placeholder="Наприклад: Батьки учня 7-А класу, Олена, Випускник" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.88rem; outline:none; font-family:inherit;">
+        </div>
+      `}
+      
+      <div style="margin-bottom:12px;">
+        <label style="display:block; font-size:0.82rem; font-weight:600; color:#334155; margin-bottom:4px;">Текст відгуку чи запитання:</label>
+        <textarea id="comment-text" rows="3" required placeholder="Напишіть ваш відгук, враження чи запитання..." style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.88rem; outline:none; font-family:inherit;"></textarea>
       </div>
-    `}
+
+      <div style="margin-bottom:12px; display:flex; justify-content:flex-start;">
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAEV0LFYhuw2h7WOY" data-theme="light"></div>
+      </div>
+
+      <div id="comment-feedback" style="font-size:0.82rem; margin-bottom:10px; display:none;"></div>
+
+      <button type="submit" id="comment-submit-btn" style="background:#1a365d; color:#fff; border:0; padding:9px 20px; border-radius:4px; font-weight:700; cursor:pointer; font-size:0.88rem; display:inline-flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-paper-plane"></i> Надіслати відгук
+      </button>
+    </form>
 
     <div id="comments-list" style="display:flex; flex-direction:column; gap:12px;">
-      <div style="color:#64748b; font-size:0.85rem;">Завантаження коментарів...</div>
+      <div style="color:#64748b; font-size:0.85rem;">Завантаження відгуків...</div>
     </div>
   `;
 
   mainCol.appendChild(section);
 
-  // Проверка роли пользователя
+  // Check admin role for delete rights
   let currentUserRole = null;
   if (userEmail) {
     try {
       const { data: member } = await db.from('admin_users').select('role').eq('email', userEmail).maybeSingle();
       currentUserRole = member ? member.role : null;
-    } catch (e) {
-      console.warn('[editable.js] Could not check user role for comments:', e);
-    }
-    // Fallback
+    } catch (e) {}
     if (!currentUserRole && window.SUPER_ADMIN_EMAIL && userEmail === window.SUPER_ADMIN_EMAIL.toLowerCase()) {
       currentUserRole = 'super_admin';
     }
   }
 
-  // Загрузка комментариев
+  // Load comments
   async function loadComments() {
     const listEl = document.getElementById('comments-list');
     try {
@@ -271,35 +290,37 @@ async function initCommentsSection(db, page, session) {
       if (error) throw error;
 
       if (!comments || comments.length === 0) {
-        listEl.innerHTML = '<div style="color:#94a3b8; font-size:0.85rem;">Коментарів поки немає. Будьте першим!</div>';
+        listEl.innerHTML = '<div style="color:#94a3b8; font-size:0.85rem;">Відгуків поки немає. Будьте першим, хто залишить відгук!</div>';
         return;
       }
 
       listEl.innerHTML = comments.map(c => {
-        const canDelete = currentUserRole === 'super_admin' || currentUserRole === 'admin' || (userEmail && userEmail === c.author_email);
-        const name = c.author_email.split('@')[0];
+        const canDelete = currentUserRole === 'super_admin' || currentUserRole === 'admin' || (userEmail && c.author_email && userEmail === c.author_email.toLowerCase());
+        const authorName = c.author_name || (c.author_email ? c.author_email.split('@')[0] : 'Гість');
         const dateStr = new Date(c.created_at).toLocaleString('uk-UA', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        const avatarUrl = c.author_email ? `https://www.gravatar.com/avatar/${md5Hex(c.author_email)}?d=mp&s=60` : null;
+
         return `
-          <div style="background:#fff; border:1px solid #e2e8f0; padding:12px 14px; border-radius:6px; position:relative;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <div style="background:#fff; border:1px solid #e2e8f0; padding:12px 16px; border-radius:6px; position:relative; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
               <div style="display:flex; align-items:center; gap:8px;">
-                <img src="https://www.gravatar.com/avatar/${md5Hex(c.author_email)}?d=mp&s=60" style="width:26px;height:26px;border-radius:50%;">
-                <strong style="font-size:0.88rem; color:#0f172a;">${name}</strong>
+                ${avatarUrl ? `<img src="${avatarUrl}" style="width:26px;height:26px;border-radius:50%;">` : '<i class="fa-solid fa-circle-user" style="font-size:1.4rem; color:#94a3b8;"></i>'}
+                <strong style="font-size:0.9rem; color:#0f172a;">${escapeHTML(authorName)}</strong>
                 <span style="font-size:0.75rem; color:#94a3b8;">(${dateStr})</span>
               </div>
-              ${canDelete ? `<button onclick="deleteComment('${c.id}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:0.8rem;" title="Видалити коментар"><i class="fa-solid fa-trash"></i></button>` : ''}
+              ${canDelete ? `<button onclick="deleteComment('${c.id}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:0.85rem; padding:4px;" title="Видалити відгук"><i class="fa-solid fa-trash"></i></button>` : ''}
             </div>
             <div style="font-size:0.88rem; color:#334155; line-height:1.5; white-space:pre-wrap;">${escapeHTML(c.content)}</div>
           </div>
         `;
       }).join('');
     } catch (e) {
-      listEl.innerHTML = '<div style="color:#94a3b8; font-size:0.85rem;">Коментарів поки немає.</div>';
+      listEl.innerHTML = '<div style="color:#94a3b8; font-size:0.85rem;">Відгуків поки немає.</div>';
     }
   }
 
   window.deleteComment = async (id) => {
-    if (!confirm('Видалити цей коментар?')) return;
+    if (!confirm('Видалити цей відгук?')) return;
     await db.from('comments').delete().eq('id', id);
     loadComments();
   };
@@ -309,12 +330,17 @@ async function initCommentsSection(db, page, session) {
     form.onsubmit = async (e) => {
       e.preventDefault();
 
-      // Comment Rate Limiting (max 1 comment per 20 seconds)
+      const feedbackEl = document.getElementById('comment-feedback');
+      const submitBtn = document.getElementById('comment-submit-btn');
+
+      // Rate limit
       const lastCommentTime = localStorage.getItem('last_comment_time');
       const now = Date.now();
       if (lastCommentTime && (now - parseInt(lastCommentTime, 10) < 20000)) {
         const waitSec = Math.ceil((20000 - (now - parseInt(lastCommentTime, 10))) / 1000);
-        alert(`Зачекайте ${waitSec} сек. перед додаванням наступного коментаря.`);
+        feedbackEl.style.display = 'block';
+        feedbackEl.style.color = '#dc2626';
+        feedbackEl.textContent = `Зачекайте ${waitSec} сек. перед додаванням наступного відгуку.`;
         return;
       }
 
@@ -322,21 +348,54 @@ async function initCommentsSection(db, page, session) {
       const text = input.value.trim();
       if (!text) return;
 
-      const cleanContent = sanitizeEditableHtml(text);
+      const authorName = document.getElementById('comment-author-name')?.value.trim() || (userEmail ? userEmail.split('@')[0] : 'Гість');
 
-      const { error } = await db.from('comments').insert({
-        page,
-        author_email: userEmail,
-        content: cleanContent,
-        created_at: new Date().toISOString()
-      });
+      // Get Turnstile token
+      const turnstileInput = form.querySelector('[name="cf-turnstile-response"]');
+      const turnstileToken = turnstileInput ? turnstileInput.value : '';
 
-      if (error) {
-        alert('Помилка при додаванні коментаря: ' + error.message);
-      } else {
+      if (!turnstileToken) {
+        feedbackEl.style.display = 'block';
+        feedbackEl.style.color = '#dc2626';
+        feedbackEl.textContent = 'Будь ласка, пройдіть перевірку безпеки (капчу).';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Відправка...';
+      feedbackEl.style.display = 'none';
+
+      try {
+        const { data, error } = await db.rpc('submit_comment_secure', {
+          p_page: page,
+          p_author_name: authorName,
+          p_content: text,
+          p_turnstile_token: turnstileToken
+        });
+
+        if (error) throw error;
+
         localStorage.setItem('last_comment_time', Date.now().toString());
         input.value = '';
+        if (document.getElementById('comment-author-name')) {
+          document.getElementById('comment-author-name').value = '';
+        }
+
+        feedbackEl.style.display = 'block';
+        feedbackEl.style.color = '#166534';
+        feedbackEl.textContent = '✅ Ваш відгук успішно опубліковано!';
+        setTimeout(() => { feedbackEl.style.display = 'none'; }, 4000);
+
+        if (window.turnstile) { try { turnstile.reset(); } catch(err) {} }
         loadComments();
+      } catch (err) {
+        feedbackEl.style.display = 'block';
+        feedbackEl.style.color = '#dc2626';
+        feedbackEl.textContent = '❌ Помилка: ' + (err.message || 'Не вдалося опублікувати відгук.');
+        if (window.turnstile) { try { turnstile.reset(); } catch(err) {} }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Надіслати відгук';
       }
     };
   }
