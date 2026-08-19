@@ -255,9 +255,9 @@
             if (session) window.location.href = 'dashboard.html';
         });
 
-        // === BRUTE-FORCE PROTECTION: exponential backoff ===
-        let loginFailures = parseInt(sessionStorage.getItem('login_failures') || '0', 10);
-        let lockedUntil = parseInt(sessionStorage.getItem('login_locked_until') || '0', 10);
+        // === BRUTE-FORCE PROTECTION: persistent cross-tab backoff ===
+        let loginFailures = parseInt(localStorage.getItem('login_failures') || '0', 10);
+        let lockedUntil = parseInt(localStorage.getItem('login_locked_until') || '0', 10);
 
         function getBackoffDelay(failures) {
             // 0 fail=0s, 1=2s, 2=4s, 3=8s, 4=16s, 5+=30s
@@ -292,8 +292,8 @@
                 loginFailures++;
                 const delay = getBackoffDelay(loginFailures);
                 lockedUntil = Date.now() + delay;
-                sessionStorage.setItem('login_failures', loginFailures.toString());
-                sessionStorage.setItem('login_locked_until', lockedUntil.toString());
+                localStorage.setItem('login_failures', loginFailures.toString());
+                localStorage.setItem('login_locked_until', lockedUntil.toString());
 
                 let msg = 'Невірний email або пароль. Перевірте дані та спробуйте ще раз.';
                 if (loginFailures >= 3 && delay > 0) {
@@ -307,8 +307,8 @@
             }
 
             // Успішний вхід — скидаємо лічильник і редиректимо
-            sessionStorage.removeItem('login_failures');
-            sessionStorage.removeItem('login_locked_until');
+            localStorage.removeItem('login_failures');
+            localStorage.removeItem('login_locked_until');
             window.location.href = 'dashboard.html';
         }
 
