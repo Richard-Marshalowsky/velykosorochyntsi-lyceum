@@ -99,6 +99,66 @@ create policy "admins read trust messages" on public.trust_messages for select t
 GRANT ALL ON public.trust_messages TO authenticated;
 GRANT ALL ON public.trust_messages TO anon;
 
+-- SERVER-SIDE IP RATE-LIMITING TABLE & RPC FUNCTION FOR TRUST MESSAGES
+create table if not exists public.trust_rate_limits (
+  ip_address text primary key,
+  last_submitted_at timestamptz not null default now()
+);
+
+alter table public.trust_rate_limits enable row level security;
+grant select, insert, update on public.trust_rate_limits to anon, authenticated;
+
+create or replace function public.submit_trust_message_secure(
+  p_name text,
+  p_status text,
+  p_subject text,
+  p_message text
+) returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_headers jsonb;
+  v_client_ip text;
+  v_last_time timestamptz;
+  v_cooldown_seconds int := 60;
+begin
+  -- Extract real client IP from Cloudflare/Supabase HTTP headers
+  begin
+    v_headers := current_setting('request.headers', true)::jsonb;
+    v_client_ip := coalesce(
+      v_headers->>'cf-connecting-ip',
+      v_headers->>'x-forwarded-for',
+      'unknown'
+    );
+    if v_client_ip like '%,%' then
+      v_client_ip := split_part(v_client_ip, ',', 1);
+    end if;
+  exception when others then
+    v_client_ip := 'unknown';
+  end;
+
+  -- Enforce server-side rate limit per IP
+  if v_client_ip <> 'unknown' then
+    select last_submitted_at into v_last_time
+    from public.trust_rate_limits
+    where ip_address = v_client_ip;
+
+    if v_last_time is not null and (now() - v_last_time) < (v_cooldown_seconds || ' seconds')::interval then
+      raise exception 'Зачекайте 1 хвилину перед наступною відправкою звернення (Серверне обмеження за IP)';
+    end if;
+
+    insert into public.trust_rate_limits(ip_address, last_submitted_at)
+    values (v_client_ip, now())
+    on conflict (ip_address) do update set last_submitted_at = now();
+  end if;
+
+  insert into public.trust_messages(name, status, subject, message)
+  values (coalesce(nullif(trim(p_name), ''), 'Анонімно'), coalesce(p_status, 'other'), p_subject, p_message);
+
+  return jsonb_build_object('success', true, 'message', 'Звернення надіслано');
+end;
+$$;
+
+grant execute on function public.submit_trust_message_secure(text, text, text, text) to anon, authenticated;
+
 -- Also grant usage on sequences if any
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO authenticated;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO anon;
