@@ -99,7 +99,7 @@ create policy "admins read trust messages" on public.trust_messages for select t
 grant select, update, delete on public.trust_messages to authenticated;
 revoke insert, select, update, delete on public.trust_messages from anon;
 
--- SERVER-SIDE IP RATE-LIMITING TABLE & RPC FUNCTION FOR TRUST MESSAGES
+-- SERVER-SIDE IP RATE-LIMITING TABLE
 create table if not exists public.trust_rate_limits (
   ip_address text primary key,
   last_submitted_at timestamptz not null default now()
@@ -108,22 +108,63 @@ create table if not exists public.trust_rate_limits (
 alter table public.trust_rate_limits enable row level security;
 
 -- PRIVACY Hardening: REVOKE SELECT from anon & authenticated to prevent IP address leaks!
--- The SECURITY DEFINER RPC function bypasses RLS safely internally, keeping IPs completely private.
 revoke all on public.trust_rate_limits from anon, authenticated;
+
+-- Enable http extension for server-side Turnstile verification
+-- Run this ONCE: create extension if not exists http with schema extensions;
+-- If http extension is not available, use the Edge Function approach (see below).
+
+-- Drop old function signature (4 params) to avoid overload conflicts
+drop function if exists public.submit_trust_message_secure(text, text, text, text);
 
 create or replace function public.submit_trust_message_secure(
   p_name text,
   p_status text,
   p_subject text,
-  p_message text
+  p_message text,
+  p_turnstile_token text default null
 ) returns jsonb language plpgsql security definer set search_path = public as $$
 declare
   v_headers jsonb;
   v_client_ip text;
   v_last_time timestamptz;
   v_cooldown_seconds int := 60;
+  v_turnstile_secret text := ''; -- PUT YOUR TURNSTILE SECRET KEY HERE
+  v_turnstile_ok boolean := false;
+  v_http_response extensions.http_response;
+  v_response_body jsonb;
 begin
-  -- Extract real client IP from Cloudflare/Supabase HTTP headers
+  -- 1. Verify Turnstile captcha token (server-side!)
+  if p_turnstile_token is null or trim(p_turnstile_token) = '' then
+    raise exception 'Пройдіть перевірку безпеки (капчу)';
+  end if;
+
+  -- Only verify if secret key is configured
+  if v_turnstile_secret <> '' then
+    begin
+      select * into v_http_response from extensions.http_post(
+        'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+        json_build_object(
+          'secret', v_turnstile_secret,
+          'response', p_turnstile_token
+        )::text,
+        'application/json'
+      );
+      v_response_body := v_http_response.content::jsonb;
+      v_turnstile_ok := coalesce((v_response_body->>'success')::boolean, false);
+    exception when others then
+      -- If http extension not available or request fails, log and allow (fail-open)
+      -- To make this fail-closed, change to: raise exception 'Помилка перевірки капчі';
+      v_turnstile_ok := true;
+      raise notice 'Turnstile verification skipped: %', SQLERRM;
+    end;
+
+    if not v_turnstile_ok then
+      raise exception 'Перевірка безпеки не пройдена. Спробуйте оновити сторінку.';
+    end if;
+  end if;
+
+  -- 2. Extract real client IP from Cloudflare/Supabase HTTP headers
   begin
     v_headers := current_setting('request.headers', true)::jsonb;
     v_client_ip := coalesce(
@@ -138,7 +179,7 @@ begin
     v_client_ip := 'unknown';
   end;
 
-  -- Enforce server-side rate limit per IP
+  -- 3. Enforce server-side rate limit per IP
   if v_client_ip <> 'unknown' then
     select last_submitted_at into v_last_time
     from public.trust_rate_limits
@@ -153,6 +194,7 @@ begin
     on conflict (ip_address) do update set last_submitted_at = now();
   end if;
 
+  -- 4. Insert the trust message
   insert into public.trust_messages(name, status, subject, message)
   values (coalesce(nullif(trim(p_name), ''), 'Анонімно'), coalesce(p_status, 'other'), p_subject, p_message);
 
@@ -160,8 +202,9 @@ begin
 end;
 $$;
 
-grant execute on function public.submit_trust_message_secure(text, text, text, text) to anon, authenticated;
+grant execute on function public.submit_trust_message_secure(text, text, text, text, text) to anon, authenticated;
 
 -- Also grant usage on sequences if any
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO authenticated;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO anon;
+

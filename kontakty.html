@@ -137,9 +137,8 @@
                                 <label for="trust-message">Текст звернення:</label>
                                 <textarea id="trust-message" rows="5" required placeholder="Опишіть ситуацію чи вашу пропозицію..."></textarea>
                             </div>
-                            <div class="form-group" style="margin-top:10px;">
-                                <label for="trust-captcha"><i class="fa-solid fa-calculator" style="color:#2563eb;"></i> Перевірка від спаму: Скільки буде <strong id="trust-captcha-question">...</strong>?</label>
-                                <input type="number" id="trust-captcha" required placeholder="Введіть результат">
+                            <div class="form-group" style="margin-top:10px; display:flex; justify-content:center;">
+                                <div class="cf-turnstile" data-sitekey="0x4AAAAAAEV0LFYhuw2h7WOY" data-theme="light"></div>
                             </div>
                             <div class="form-group" style="margin-top:12px;">
                                 <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.82rem; color:#475569; cursor:pointer;">
@@ -178,6 +177,7 @@
         </div>
     </footer>
 
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="admin/supabase-config.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
