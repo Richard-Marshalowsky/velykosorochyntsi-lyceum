@@ -125,14 +125,21 @@ function openNewsModal(id) {
     if (!item) return;
 
     const modalBody = document.getElementById('modal-body-content');
-    const rawHtml = `
+
+    if (!window.DOMPurify) {
+        console.error('DOMPurify is not loaded — refusing to render unsanitized HTML');
+        modalBody.textContent = 'Помилка завантаження. Оновіть сторінку.';
+        document.getElementById('news-modal').classList.add('open');
+        return;
+    }
+
+    modalBody.innerHTML = DOMPurify.sanitize(`
         <span class="news-category" style="position:static; display:inline-block; margin-bottom:10px;">${item.category}</span>
         <h2 style="font-size:1.3rem; margin-bottom:6px; color:#1a365d;">${item.title}</h2>
         <div style="font-size:0.8rem; color:#64748b; margin-bottom:16px;"><i class="fa-regular fa-calendar"></i> ${item.date}</div>
         <img src="${item.img}" alt="${item.title}" style="width:100%; height:240px; object-fit:cover; border-radius:4px; margin-bottom:16px;">
         <div style="font-size:0.9rem; line-height:1.6; color:#334155;">${item.content}</div>
-    `;
-    modalBody.innerHTML = window.DOMPurify ? DOMPurify.sanitize(rawHtml) : rawHtml;
+    `);
 
     document.getElementById('news-modal').classList.add('open');
 }

@@ -176,25 +176,32 @@ insert into public.admin_users(email, role) values
  ('dov@vs.pl.ukr.education','admin')
 on conflict (email) do update set role = excluded.role;
 
--- Grant minimal necessary table permissions
-grant all on public.admin_users to authenticated;
+-- Grant MINIMAL table permissions (Principle of Least Privilege)
+-- admin_users: admins need full CRUD, anon only reads (for is_site_admin checks)
+grant select, insert, update, delete on public.admin_users to authenticated;
 grant select on public.admin_users to anon;
 
-grant all on public.site_content to authenticated;
+-- site_content: admins edit via RLS, public reads
+grant select, insert, update on public.site_content to authenticated;
 grant select on public.site_content to anon;
 
-grant all on public.news to authenticated;
+-- news: admins insert/update/delete via RLS, public reads
+grant select, insert, update, delete on public.news to authenticated;
 grant select on public.news to anon;
 
-grant all on public.documents to authenticated;
+-- documents: admins manage via RLS, public reads
+grant select, insert, update, delete on public.documents to authenticated;
 grant select on public.documents to anon;
 
-grant all on public.schedule to authenticated;
+-- schedule: admins manage via RLS, public reads
+grant select, insert, update on public.schedule to authenticated;
 grant select on public.schedule to anon;
 
-grant all on public.comments to authenticated;
+-- comments: public reads, admins delete via RLS, inserts go through RPC only
+grant select, delete on public.comments to authenticated;
 grant select on public.comments to anon;
 
+-- trust_messages: admins read/delete only, inserts go through RPC only
 grant select, delete on public.trust_messages to authenticated;
 
 
@@ -235,7 +242,11 @@ begin
     raise exception 'Тема звернення занадто довга (максимум 200 символів)';
   end if;
   if p_name is not null and length(p_name) > 100 then
-    raise exception 'Ім’я занадто довге (максимум 100 символів)';
+    raise exception 'Ім''я занадто довге (максимум 100 символів)';
+  end if;
+  -- Validate p_status against whitelist
+  if p_status is not null and p_status not in ('student', 'parent', 'teacher', 'other', '') then
+    raise exception 'Невідомий статус';
   end if;
 
   -- 2. Turnstile Captcha verification (Strict Fail-Closed: no bypass if key is missing)
@@ -260,7 +271,7 @@ begin
     v_turnstile_ok := coalesce((v_response_body->>'success')::boolean, false);
   exception when others then
     -- Fail-closed
-    raise exception 'Помилка з’єднання з сервісом перевірки безпеки. Спробуйте пізніше.';
+    raise exception 'Помилка з''єднання з сервісом перевірки безпеки. Спробуйте пізніше.';
   end;
 
   if not v_turnstile_ok then
@@ -342,7 +353,11 @@ begin
     raise exception 'Текст відгуку занадто довгий (максимум 3000 символів)';
   end if;
   if p_author_name is not null and length(p_author_name) > 100 then
-    raise exception 'Ім’я занадто довге (максимум 100 символів)';
+    raise exception 'Ім''я занадто довге (максимум 100 символів)';
+  end if;
+  -- Validate p_page length
+  if p_page is not null and length(p_page) > 200 then
+    raise exception 'Невалідна сторінка';
   end if;
 
   -- 2. Turnstile Captcha verification (Strict Fail-Closed)
@@ -367,7 +382,7 @@ begin
     v_turnstile_ok := coalesce((v_response_body->>'success')::boolean, false);
   exception when others then
     -- Fail-closed
-    raise exception 'Помилка з’єднання з сервісом перевірки безпеки. Спробуйте пізніше.';
+    raise exception 'Помилка з''єднання з сервісом перевірки безпеки. Спробуйте пізніше.';
   end;
 
   if not v_turnstile_ok then
