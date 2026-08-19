@@ -129,14 +129,42 @@ function closeNewsModal(e) {
     document.getElementById('news-modal').classList.remove('open');
 }
 
-// 6. TRUST BOX: compose a real email instead of pretending a message was sent
+// 6. TRUST BOX: real background email submission with anti-spam protection
+const TRUST_RECIPIENT_EMAIL = 'simplejoper@gmail.com'; // Change to dov@vs.pl.ukr.education when ready
+
 function initTrustForm() {
     const form = document.getElementById('trust-form');
     if (!form) return;
 
     const feedback = document.getElementById('trust-feedback');
-    form.addEventListener('submit', event => {
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', async event => {
         event.preventDefault();
+
+        // 1. Anti-Spam: Honeypot check
+        const hp = document.getElementById('trust-hp')?.value;
+        if (hp) {
+            // Fake success for bots
+            if (feedback) {
+                feedback.style.color = '#166534';
+                feedback.textContent = 'Ваше звернення успішно надіслано!';
+            }
+            form.reset();
+            return;
+        }
+
+        // 2. Anti-Spam: Rate limiting (60 seconds cooldown per browser)
+        const lastSent = localStorage.getItem('trust_form_last_sent');
+        const now = Date.now();
+        if (lastSent && (now - parseInt(lastSent, 10) < 60000)) {
+            const secondsLeft = Math.ceil((60000 - (now - parseInt(lastSent, 10))) / 1000);
+            if (feedback) {
+                feedback.style.color = '#dc2626';
+                feedback.textContent = `Зачекайте ${secondsLeft} сек. перед повторною відправкою звернення.`;
+            }
+            return;
+        }
 
         const name = document.getElementById('trust-name')?.value.trim() || 'Анонімно';
         const status = document.getElementById('trust-status')?.value || '';
@@ -150,21 +178,51 @@ function initTrustForm() {
             teacher: 'Вчитель / Працівник',
             other: 'Інше'
         };
-        const body = [
-            'Ім’я: ' + name,
-            'Категорія: ' + (statusLabels[status] || status),
-            '',
-            message
-        ].join('\r\n');
 
         if (feedback) {
-            feedback.textContent = 'Відкриваємо вашу поштову програму. Перевірте текст листа та надішліть його самостійно.';
-            feedback.style.color = '#166534';
+            feedback.style.color = '#1d4ed8';
+            feedback.textContent = 'Надсилання звернення...';
         }
+        if (submitBtn) submitBtn.disabled = true;
 
-        window.location.href = 'mailto:sorint@ukr.net?subject='
-            + encodeURIComponent('Скринька довіри: ' + subject)
-            + '&body=' + encodeURIComponent(body);
+        try {
+            const response = await fetch(`https://formsubmit.co/ajax/${TRUST_RECIPIENT_EMAIL}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    _subject: `[Скринька довіри] ${subject}`,
+                    _template: 'table',
+                    "Ім'я": name,
+                    "Категорія": statusLabels[status] || status,
+                    "Тема звернення": subject,
+                    "Текст звернення": message,
+                    "Дата відправки": new Date().toLocaleString('uk-UA')
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok || data.success === 'true' || data.success === true) {
+                localStorage.setItem('trust_form_last_sent', Date.now().toString());
+                if (feedback) {
+                    feedback.style.color = '#166534';
+                    feedback.textContent = 'Ваше звернення успішно надіслано адміністрації! Дякуємо.';
+                }
+                form.reset();
+            } else {
+                throw new Error(data.message || 'Не вдалося надіслати лист');
+            }
+        } catch (err) {
+            console.error('[TrustForm Error]', err);
+            if (feedback) {
+                feedback.style.color = '#dc2626';
+                feedback.textContent = 'Помилка при надсиланні звернення. Спробуйте пізніше.';
+            }
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
+        }
     });
 }
 

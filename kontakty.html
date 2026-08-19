@@ -137,6 +137,10 @@
                                 <label for="trust-message">Текст звернення:</label>
                                 <textarea id="trust-message" rows="5" required placeholder="Опишіть ситуацію чи вашу пропозицію..."></textarea>
                             </div>
+                            <!-- Honeypot spam trap (invisible for humans, filled by bots) -->
+                            <div style="display:none;" aria-hidden="true">
+                                <input type="text" name="_gotcha" id="trust-hp" tabindex="-1" autocomplete="off">
+                            </div>
                             <button type="submit" class="btn-submit"><i class="fa-solid fa-paper-plane"></i> Надіслати звернення</button>
                         </form>
                         <div id="trust-feedback" class="form-feedback" role="status" aria-live="polite"></div>
