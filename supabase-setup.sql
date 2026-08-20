@@ -46,9 +46,9 @@ create table if not exists public.documents (
 );
 alter table public.documents enable row level security;
 
--- Server-side validation constraint: only allow http:// and https:// (blocks javascript:, data:, vbscript:)
+alter table public.documents add column if not exists url text;
 alter table public.documents drop constraint if exists documents_url_check;
-alter table public.documents add constraint documents_url_check check (url ~* '^https?://[^\s<>"]+$');
+alter table public.documents add constraint documents_url_check check (url is null or url ~* '^https?://[^\s<>"]+$');
 
 -- 5. SCHEDULE TABLE
 create table if not exists public.schedule (
@@ -87,21 +87,18 @@ create table if not exists public.trust_rate_limits (
   last_submitted_at timestamptz not null default now()
 );
 alter table public.trust_rate_limits enable row level security;
-revoke all on public.trust_rate_limits from public, anon, authenticated;
 
 create table if not exists public.comment_rate_limits (
   ip_address text primary key,
   last_submitted_at timestamptz not null default now()
 );
 alter table public.comment_rate_limits enable row level security;
-revoke all on public.comment_rate_limits from public, anon, authenticated;
 
 create table if not exists public.comment_user_rate_limits (
   user_id uuid primary key,
   last_submitted_at timestamptz not null default now()
 );
 alter table public.comment_user_rate_limits enable row level security;
-revoke all on public.comment_user_rate_limits from public, anon, authenticated;
 
 
 -- =========================================================================
@@ -121,22 +118,29 @@ $$;
 revoke all on function public.is_super_admin() from public;
 grant execute on function public.is_super_admin() to anon, authenticated;
 
+-- Deduplicate Production Policies & Re-apply Clean RLS Policies
+
 -- Policies: admin_users
 drop policy if exists "admins read own role" on public.admin_users;
+drop policy if exists "admin_users_select_own" on public.admin_users;
 create policy "admins read own role" on public.admin_users for select to authenticated using (email = lower(auth.jwt()->>'email'));
 
 drop policy if exists "super admins manage users" on public.admin_users;
+drop policy if exists "super_admin_manage_users" on public.admin_users;
 create policy "super admins manage users" on public.admin_users for all to authenticated using (public.is_super_admin()) with check (public.is_super_admin());
 
 -- Policies: site_content
 drop policy if exists "public reads content" on public.site_content;
+drop policy if exists "site_content_public_read" on public.site_content;
 create policy "public reads content" on public.site_content for select using (true);
 
 drop policy if exists "admins edit content" on public.site_content;
+drop policy if exists "site_content_admins_edit" on public.site_content;
 create policy "admins edit content" on public.site_content for all to authenticated using (public.is_site_admin()) with check (public.is_site_admin());
 
 -- Policies: news
 drop policy if exists "public reads news" on public.news;
+drop policy if exists "news_public_read" on public.news;
 create policy "public reads news" on public.news for select using (true);
 
 drop policy if exists "members publish news" on public.news;
@@ -151,34 +155,42 @@ create policy "admins manage news" on public.news for update to authenticated us
 drop policy if exists "super admins delete news" on public.news;
 create policy "super admins delete news" on public.news for delete to authenticated using (public.is_super_admin());
 
--- Policies: documents
+-- Policies: documents (Deduplicate)
 drop policy if exists "public reads documents" on public.documents;
+drop policy if exists "documents_public_read" on public.documents;
 create policy "public reads documents" on public.documents for select using (true);
 
 drop policy if exists "admins manage documents" on public.documents;
+drop policy if exists "admins_manage_documents" on public.documents;
+drop policy if exists "documents_admins_all" on public.documents;
 create policy "admins manage documents" on public.documents for all to authenticated using (public.is_site_admin()) with check (public.is_site_admin());
 
 -- Policies: schedule
 drop policy if exists "public reads schedule" on public.schedule;
+drop policy if exists "schedule_public_read" on public.schedule;
 create policy "public reads schedule" on public.schedule for select using (true);
 
 drop policy if exists "admins manage schedule" on public.schedule;
+drop policy if exists "schedule_admins_all" on public.schedule;
 create policy "admins manage schedule" on public.schedule for all to authenticated using (public.is_site_admin()) with check (public.is_site_admin());
 
--- Policies: trust_messages (Only readable/deletable by admins)
+-- Policies: trust_messages (Deduplicate)
 drop policy if exists "admins read trust messages" on public.trust_messages;
+drop policy if exists "trust_messages_admins_select" on public.trust_messages;
 create policy "admins read trust messages" on public.trust_messages for select to authenticated using (public.is_site_admin());
 
 drop policy if exists "admins delete trust messages" on public.trust_messages;
+drop policy if exists "trust_messages_admins_delete" on public.trust_messages;
 create policy "admins delete trust messages" on public.trust_messages for delete to authenticated using (public.is_site_admin());
 
-revoke insert, select, update, delete on public.trust_messages from public, anon;
-
--- Policies: comments (Read by public, delete by admins)
+-- Policies: comments (Deduplicate)
 drop policy if exists "public read comments" on public.comments;
+drop policy if exists "comments_public_read" on public.comments;
+drop policy if exists "public reads comments" on public.comments;
 create policy "public read comments" on public.comments for select using (true);
 
 drop policy if exists "admins delete comments" on public.comments;
+drop policy if exists "comments_admins_delete" on public.comments;
 create policy "admins delete comments" on public.comments for delete to authenticated using (public.is_site_admin());
 
 -- Initial Super Admins
@@ -187,25 +199,46 @@ insert into public.admin_users(email, role) values
  ('dov@vs.pl.ukr.education','admin')
 on conflict (email) do update set role = excluded.role;
 
--- Grant minimal table permissions (Principle of Least Privilege)
-grant select, insert, update, delete on public.admin_users to authenticated;
-grant select on public.admin_users to anon;
+-- =========================================================================
+-- STRICT GRANT / REVOKE (Deny by Default + Least Privilege)
+-- =========================================================================
 
-grant select, insert, update on public.site_content to authenticated;
-grant select on public.site_content to anon;
+-- Revoke all public/anon/authenticated grants from rate limit tables
+revoke all on public.trust_rate_limits from public, anon, authenticated;
+revoke all on public.comment_rate_limits from public, anon, authenticated;
+revoke all on public.comment_user_rate_limits from public, anon, authenticated;
 
-grant select, insert, update, delete on public.news to authenticated;
-grant select on public.news to anon;
+-- admin_users: authenticated only gets SELECT (RLS limits to own row)
+revoke insert, update, delete on public.admin_users from public, anon, authenticated;
+grant select on public.admin_users to authenticated;
 
-grant select, insert, update, delete on public.documents to authenticated;
-grant select on public.documents to anon;
+-- site_content: anon & authenticated get SELECT; write operations restricted to authenticated
+revoke insert, update, delete on public.site_content from public, anon;
+grant select on public.site_content to anon, authenticated;
+grant insert, update on public.site_content to authenticated;
 
-grant select, insert, update on public.schedule to authenticated;
-grant select on public.schedule to anon;
+-- news: anon gets SELECT; authenticated gets SELECT, INSERT, UPDATE, DELETE (RLS controls who actually can)
+revoke insert, update, delete on public.news from public, anon;
+grant select on public.news to anon, authenticated;
+grant insert, update, delete on public.news to authenticated;
 
-grant select, delete on public.comments to authenticated;
-grant select on public.comments to anon;
+-- documents: anon gets SELECT; authenticated gets SELECT, INSERT, UPDATE, DELETE (RLS controls who actually can)
+revoke insert, update, delete on public.documents from public, anon;
+grant select on public.documents to anon, authenticated;
+grant insert, update, delete on public.documents to authenticated;
 
+-- schedule: anon gets SELECT; authenticated gets SELECT, INSERT, UPDATE (RLS controls who actually can)
+revoke insert, update, delete on public.schedule from public, anon;
+grant select on public.schedule to anon, authenticated;
+grant insert, update on public.schedule to authenticated;
+
+-- comments: anon & authenticated get SELECT; direct INSERT revoked (must use RPC); DELETE allowed for authenticated (RLS enforced)
+revoke insert, update on public.comments from public, anon, authenticated;
+grant select on public.comments to anon, authenticated;
+grant delete on public.comments to authenticated;
+
+-- trust_messages: anon gets NOTHING; authenticated gets SELECT, DELETE (RLS limits to admins)
+revoke all on public.trust_messages from public, anon;
 grant select, delete on public.trust_messages to authenticated;
 
 
@@ -253,7 +286,7 @@ begin
     raise exception 'Невідомий статус';
   end if;
 
-  -- 2. Turnstile Captcha verification (Strict Fail-Closed: no bypass if key is missing)
+  -- 2. Turnstile Captcha verification (Strict Fail-Closed)
   if p_turnstile_token is null or trim(p_turnstile_token) = '' then
     raise exception 'Пройдіть перевірку безпеки (капчу)';
   end if;
@@ -274,7 +307,6 @@ begin
     v_response_body := v_http_response.content::jsonb;
     v_turnstile_ok := coalesce((v_response_body->>'success')::boolean, false);
   exception when others then
-    -- Fail-closed
     raise exception 'Помилка з''єднання з сервісом перевірки безпеки. Спробуйте пізніше.';
   end;
 
@@ -320,7 +352,6 @@ begin
 end;
 $$;
 
--- Revoke all permissions from public, grant explicitly only to anon and authenticated
 revoke all on function public.submit_trust_message_secure(text, text, text, text, text) from public;
 grant execute on function public.submit_trust_message_secure(text, text, text, text, text) to anon, authenticated;
 
@@ -360,7 +391,6 @@ begin
     raise exception 'Недійсний акаунт (відсутній email)';
   end if;
 
-  -- Derive verified name from JWT token rather than trusting client input blindly
   v_auth_name := coalesce(
     nullif(trim(auth.jwt()->>'name'), ''),
     nullif(trim(auth.jwt()->'user_metadata'->>'full_name'), ''),
@@ -404,7 +434,6 @@ begin
     v_response_body := v_http_response.content::jsonb;
     v_turnstile_ok := coalesce((v_response_body->>'success')::boolean, false);
   exception when others then
-    -- Fail-closed
     raise exception 'Помилка з''єднання з сервісом перевірки безпеки. Спробуйте пізніше.';
   end;
 
@@ -412,7 +441,7 @@ begin
     raise exception 'Перевірка безпеки не пройдена. Оновіть сторінку.';
   end if;
 
-  -- 4. User-based Rate Limit (per authenticated user_id)
+  -- 4. User-based Rate Limit
   insert into public.comment_user_rate_limits(user_id, last_submitted_at)
   values (v_auth_user_id, now())
   on conflict (user_id) do update
@@ -423,7 +452,7 @@ begin
     raise exception 'Зачекайте 20 секунд перед додаванням наступного відгуку';
   end if;
 
-  -- 5. IP-based Rate Limit (per IP address)
+  -- 5. IP-based Rate Limit
   begin
     v_headers := current_setting('request.headers', true)::jsonb;
     v_client_ip := coalesce(
@@ -447,7 +476,7 @@ begin
     raise exception 'Зачекайте 20 секунд перед додаванням наступного відгуку';
   end if;
 
-  -- 6. Insert verified comment
+  -- 6. Insert comment
   insert into public.comments(page, author_name, author_email, content)
   values (
     coalesce(nullif(trim(p_page), ''), '/index.html'),
@@ -460,6 +489,5 @@ begin
 end;
 $$;
 
--- STRICT: Revoke from PUBLIC and anon, grant execute ONLY to authenticated
 revoke all on function public.submit_comment_secure(text, text, text, text) from public, anon;
 grant execute on function public.submit_comment_secure(text, text, text, text) to authenticated;
