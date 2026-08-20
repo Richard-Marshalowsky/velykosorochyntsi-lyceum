@@ -246,6 +246,11 @@ async function handleDocSave() {
     const url = document.getElementById('doc-url').value.trim();
     if (!title || !url) { showFeedback('docs-feedback', 'error', 'Заповніть всі обов\'язкові поля'); return; }
 
+    if (!/^https?:\/\/[^\s<>"]+$/i.test(url)) {
+        showFeedback('docs-feedback', 'error', 'Некоректний URL. Дозволено тільки посилання, що починаються з http:// або https://');
+        return;
+    }
+
     let error;
     if (id) {
         ({ error } = await db.from('documents').update({ title, type, url }).eq('id', id));
