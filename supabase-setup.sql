@@ -191,7 +191,19 @@ create policy "public read comments" on public.comments for select using (true);
 
 drop policy if exists "admins delete comments" on public.comments;
 drop policy if exists "comments_admins_delete" on public.comments;
-create policy "admins delete comments" on public.comments for delete to authenticated using (public.is_site_admin());
+drop policy if exists "comments_author_delete" on public.comments;
+drop policy if exists "authors and admins delete comments" on public.comments;
+create policy "authors and admins delete comments" on public.comments for delete to authenticated
+using (
+  public.is_site_admin()
+  or author_email = lower(coalesce(auth.jwt()->>'email', ''))
+);
+
+drop policy if exists "comments_author_update" on public.comments;
+drop policy if exists "authors update own comments" on public.comments;
+create policy "authors update own comments" on public.comments for update to authenticated
+using (author_email = lower(coalesce(auth.jwt()->>'email', '')))
+with check (author_email = lower(coalesce(auth.jwt()->>'email', '')));
 
 -- Initial Super Admins
 insert into public.admin_users(email, role) values
@@ -208,9 +220,10 @@ revoke all on public.trust_rate_limits from public, anon, authenticated;
 revoke all on public.comment_rate_limits from public, anon, authenticated;
 revoke all on public.comment_user_rate_limits from public, anon, authenticated;
 
--- admin_users: anon gets NOTHING; authenticated gets SELECT, INSERT, UPDATE, DELETE (RLS policy "super admins manage users" controls access)
+-- admin_users: anon gets NOTHING; authenticated gets SELECT, INSERT, UPDATE, DELETE (RLS controls row access)
 revoke all on public.admin_users from public, anon;
 grant select, insert, update, delete on public.admin_users to authenticated;
+revoke references, trigger on public.admin_users from public, anon, authenticated;
 
 -- site_content: anon & authenticated get SELECT; write operations restricted to authenticated
 revoke insert, update, delete on public.site_content from public, anon;
