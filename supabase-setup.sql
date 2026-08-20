@@ -208,9 +208,9 @@ revoke all on public.trust_rate_limits from public, anon, authenticated;
 revoke all on public.comment_rate_limits from public, anon, authenticated;
 revoke all on public.comment_user_rate_limits from public, anon, authenticated;
 
--- admin_users: authenticated only gets SELECT (RLS limits to own row)
-revoke insert, update, delete on public.admin_users from public, anon, authenticated;
-grant select on public.admin_users to authenticated;
+-- admin_users: anon gets NOTHING; authenticated gets SELECT, INSERT, UPDATE, DELETE (RLS policy "super admins manage users" controls access)
+revoke all on public.admin_users from public, anon;
+grant select, insert, update, delete on public.admin_users to authenticated;
 
 -- site_content: anon & authenticated get SELECT; write operations restricted to authenticated
 revoke insert, update, delete on public.site_content from public, anon;
@@ -240,6 +240,20 @@ grant delete on public.comments to authenticated;
 -- trust_messages: anon gets NOTHING; authenticated gets SELECT, DELETE (RLS limits to admins)
 revoke all on public.trust_messages from public, anon;
 grant select, delete on public.trust_messages to authenticated;
+
+
+
+-- Explicitly REVOKE TRUNCATE for client roles (public, anon, authenticated) across all security-sensitive tables
+revoke truncate on public.admin_users from public, anon, authenticated;
+revoke truncate on public.comments from public, anon, authenticated;
+revoke truncate on public.news from public, anon, authenticated;
+revoke truncate on public.documents from public, anon, authenticated;
+revoke truncate on public.site_content from public, anon, authenticated;
+revoke truncate on public.schedule from public, anon, authenticated;
+revoke truncate on public.trust_messages from public, anon, authenticated;
+revoke truncate on public.trust_rate_limits from public, anon, authenticated;
+revoke truncate on public.comment_rate_limits from public, anon, authenticated;
+revoke truncate on public.comment_user_rate_limits from public, anon, authenticated;
 
 
 -- =========================================================================
