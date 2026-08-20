@@ -201,9 +201,6 @@ using (
 
 drop policy if exists "comments_author_update" on public.comments;
 drop policy if exists "authors update own comments" on public.comments;
-create policy "authors update own comments" on public.comments for update to authenticated
-using (author_email = lower(coalesce(auth.jwt()->>'email', '')))
-with check (author_email = lower(coalesce(auth.jwt()->>'email', '')));
 
 -- Initial Super Admins
 insert into public.admin_users(email, role) values
